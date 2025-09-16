@@ -1,5 +1,5 @@
 import "dotenv/config";
-
+import './config/passport.config'
 import express,{NextFunction,Request,Response} from "express";
 import { Env } from "./config/env.config";
 import cors from "cors";
@@ -11,6 +11,8 @@ const app = express();
 import { BadRequestException } from "./utils/app-error";
 import {connectDatabase} from "./config/database.config";
 import authRoutes from "./routes/auth.route";
+import { passportAuthenticateJwt } from "./config/passport.config";
+import userRoutes from "./routes/user.routes";
 const BASE_PATH=Env.BASE_PATH
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
@@ -18,6 +20,7 @@ app.use(cors({
     credentials:true
 }
 ));
+app.use(passport.initialize());
 app.use(express.json());
 app.get(
   "/",
@@ -32,6 +35,8 @@ app.get(
   })
 );
 app.use(`${BASE_PATH}/auth`, authRoutes);
+app.use(`${BASE_PATH}/user`, passportAuthenticateJwt,userRoutes )
+  
   app.use(errorHandler);
 
 (async () => {
