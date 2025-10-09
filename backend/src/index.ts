@@ -13,6 +13,7 @@ import {connectDatabase} from "./config/database.config";
 import authRoutes from "./routes/auth.route";
 import { passportAuthenticateJwt } from "./config/passport.config";
 import userRoutes from "./routes/user.routes";
+import transactionRoutes from "./routes/transaction.route";
 const BASE_PATH=Env.BASE_PATH
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
@@ -36,7 +37,7 @@ app.get(
 );
 app.use(`${BASE_PATH}/auth`, authRoutes);
 app.use(`${BASE_PATH}/user`, passportAuthenticateJwt,userRoutes )
-  
+app.use(`${BASE_PATH}/transaction`, passportAuthenticateJwt,transactionRoutes )
   app.use(errorHandler);
 
 (async () => {
