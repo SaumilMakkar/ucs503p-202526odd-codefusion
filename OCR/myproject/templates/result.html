@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}Result • Receipt OCR{% endblock %}
+
+{% block content %}
+  <a href="/">← Upload another</a>
+
+  <section class="grid result-grid">
+
+    <!-- Text Output Section -->
+    <article class="card span-2">
+      <header class="section-title">
+        <h3>Text Output</h3>
+        <button class="secondary" onclick="copyText()">Copy</button>
+      </header>
+      <pre id="ocrText" class="pre-block">{{ result.raw_text or '' }}</pre>
+    </article>
+
+    <!-- Summary Section -->
+    <article class="card">
+      <header><h3>Summary</h3></header>
+      <table>
+        <tr>
+          <td><strong>Merchant:</strong></td>
+          <td>{{ result.merchant or '—' }}</td>
+        </tr>
+        <tr>
+          <td><strong>Date:</strong></td>
+          <td>{{ result.date or '—' }}</td>
+        </tr>
+      </table>
+      <h4>Totals</h4>
+      <table>
+        <tr>
+          <td><strong>Subtotal:</strong></td>
+          <td style="text-align:right;">{{ result.totals.subtotal or '—' }}</td>
+        </tr>
+        <tr>
+          <td><strong>Tax:</strong></td>
+          <td style="text-align:right;">{{ result.totals.tax or '—' }}</td>
+        </tr>
+        <tr>
+          <td><strong>Total:</strong></td>
+          <td style="text-align:right;">{{ result.totals.total or '—' }}</td>
+        </tr>
+        <tr>
+          <td><strong>Grand Total:</strong></td>
+          <td style="text-align:right;"><strong>{{ result.totals.total or '—' }}</strong></td>
+        </tr>
+      </table>
+    </article>
+
+    <!-- Image Section -->
+    <article class="card">
+      <header><h3>Image</h3></header>
+      {% if image_path %}
+        <img src="/{{ image_path }}" alt="receipt" class="receipt-img"/>
+      {% else %}
+        <p>No image available.</p>
+      {% endif %}
+    </article>
+
+    <!-- Items Section -->
+    <article class="card span-2">
+      <header><h3>Formatted (Organized)</h3></header>
+      {% if result.lines_2col %}
+        <div class="grid">
+          <div>
+            <h5>Meta</h5>
+            <table class="items-table">
+              <tbody>
+                {% for row in result['lines_2col']['meta'] %}
+                  <tr>
+                    <td>{{ row.left }}</td>
+                    <td style="text-align:right;">{{ row.right }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <h5>Totals</h5>
+            <table class="items-table">
+              <tbody>
+                {% for row in result['lines_2col']['totals'] %}
+                  <tr>
+                    <td><strong>{{ row.left }}</strong></td>
+                    <td style="text-align:right;"><strong>{{ row.right }}</strong></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <h5 style="margin-top:1rem;">Items</h5>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th style="text-align:right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in result['lines_2col']['items'] %}
+              <tr>
+                <td>{{ row.left }}</td>
+                <td style="text-align:right;">{{ row.right }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No lines to format.</p>
+      {% endif %}
+    </article>
+    <article class="card span-2">
+      <header><h3>Detected Items (Qty / Item / Price)</h3></header>
+      {% if result.structured_items and result.structured_items|length %}
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th style="width:10%;">Qty</th>
+              <th>Description</th>
+              <th style="text-align:right; width:20%;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in result.structured_items %}
+              <tr>
+                <td>{{ it.qty }}</td>
+                <td>{{ it.description }}</td>
+                <td style="text-align:right;">{{ it.price }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No structured items detected.</p>
+      {% endif %}
+    </article>
+    <article class="card span-2">
+      <header><h3>Items</h3></header>
+      {% if result['items'] and result['items']|length %}
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th style="text-align:right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in result['items'] %}
+              <tr>
+                <td>{{ item.description }}</td>
+                <td style="text-align:right;">{{ item.amount }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No line items detected.</p>
+      {% endif %}
+    </article>
+
+    <!-- Debug Section -->
+    <article class="card span-2">
+      <details>
+        <summary>Debug: Lines</summary>
+        <pre class="pre-block">{{ result.raw_lines or [] | tojson(indent=2) }}</pre>
+      </details>
+      <details>
+        <summary>Debug: JSON</summary>
+        <pre class="pre-block">{{ result | tojson(indent=2) }}</pre>
+      </details>
+    </article>
+
+  </section>
+
+  <!-- Copy Text Script -->
+  <script>
+    function copyText(){
+      const el = document.getElementById('ocrText');
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      try { document.execCommand('copy'); } catch(e) { console.error(e); }
+      sel.removeAllRanges();
+    }
+  </script>
+{% endblock %}
