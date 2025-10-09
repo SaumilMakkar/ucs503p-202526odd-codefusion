@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Receipt OCR{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <nav class="container topbar">
+      <ul>
+        <li><strong>Receipt OCR</strong></li>
+      </ul>
+      <ul>
+        <li><a href="/">Upload</a></li>
+        <li><a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})">Top</a></li>
+      </ul>
+    </nav>
+    <main class="container">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+  </html>
+
+
