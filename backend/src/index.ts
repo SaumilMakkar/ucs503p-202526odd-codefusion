@@ -17,6 +17,8 @@ import userRoutes from "./routes/user.routes";
 import transactionRoutes from "./routes/transaction.route";
 import { initializeCrons } from "./crons";
 import reportRoutes from "./routes/report.route";
+import { getDateRange } from "./utils/date";
+import analyticsRoutes from "./routes/analytics.routes";
 const BASE_PATH=Env.BASE_PATH
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
@@ -42,8 +44,9 @@ calculateNextReportDate()
 app.use(`${BASE_PATH}/auth`, authRoutes);
 app.use(`${BASE_PATH}/user`, passportAuthenticateJwt,userRoutes )
 app.use(`${BASE_PATH}/transaction`, passportAuthenticateJwt,transactionRoutes )
-app.use(`${BASE_PATH}/reports`, passportAuthenticateJwt,reportRoutes )
-  app.use(errorHandler);
+app.use(`${BASE_PATH}/reports`, passportAuthenticateJwt, reportRoutes);
+app.use(`${BASE_PATH}/analytics`, passportAuthenticateJwt,analyticsRoutes );
+app.use(errorHandler);
 
 (async () => {
   try {
@@ -62,7 +65,7 @@ app.use(`${BASE_PATH}/reports`, passportAuthenticateJwt,reportRoutes )
     process.exit(1);
   }
 })();
-
+getDateRange("30days")
 export default app;
 
 
