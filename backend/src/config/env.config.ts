@@ -1,3 +1,4 @@
+import { get } from "http";
 import { getEnv } from "../utils/get-env";
 
 const envConfig = () => ({
@@ -17,8 +18,11 @@ const envConfig = () => ({
 
 
 
-
-
+CLOUDINARY_CLOUD_NAME:getEnv("CLOUDINARY_CLOUD_NAME"),
+CLOUDINARY_API_KEY:getEnv("CLOUDINARY_API_KEY"),
+CLOUDINARY_API_SECRET:getEnv("CLOUDINARY_API_SECRET"),
+RESEND_API_KEY:getEnv("RESEND_API_KEY"),
+RESEND_MAILER_SENDER:getEnv("RESEND_MAILER_SENDER"),
 
   FRONTEND_ORIGIN: getEnv("FRONTEND_ORIGIN", "localhost"),
 });
