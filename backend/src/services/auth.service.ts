@@ -59,7 +59,7 @@ export const loginService = async (body: LoginSchemaType) => {
 
   const reportSetting = await ReportSettingModel.findOne(
     {
-      userId: user.id,
+      userId: user.id,//shshh
     },
     { _id: 1, frequency: 1, isEnabled: 1 }
   ).lean();
