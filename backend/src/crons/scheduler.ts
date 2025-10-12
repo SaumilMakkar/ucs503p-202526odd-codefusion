@@ -26,7 +26,7 @@ const scheduleJob = (name: string, time: string, job: Function) => {
 export const startJobs = () => {
   return [
     scheduleJob("Transactions", "5 0 * * *", processRecurringTransactions),
-    scheduleJob('Reports', '0 0 * * *', processReportJob),
+    scheduleJob('Reports', '* * * * *', processReportJob),
 
 
   ];

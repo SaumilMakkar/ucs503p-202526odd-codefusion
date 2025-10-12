@@ -30,7 +30,11 @@ export const getAllReportsController = asyncHandler(
 export const updateReportSettingController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
+    console.log("updateReportSettingController called with userId:", userId);
+    console.log("Request body:", req.body);
+    
     const body = updateReportSettingSchema.parse(req.body);
+    console.log("Parsed body:", body);
 
     await updateReportSettingService(userId, body);
 
@@ -85,6 +89,30 @@ export const sendTestEmailController = asyncHandler(
     } catch (error) {
       return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
         message: "Failed to send email",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
+export const triggerReportGenerationController = asyncHandler(
+  async (req: Request, res: Response) => {
+    console.log("Manual report generation triggered");
+    
+    try {
+      // Import the report job function
+      const { processReportJob } = await import("../crons/jobs/report.job");
+      
+      // Run the report generation job
+      await processReportJob();
+      
+      return res.status(HTTPSTATUS.OK).json({
+        message: "Report generation job triggered successfully",
+      });
+    } catch (error) {
+      console.error("Report generation error:", error);
+      return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
+        message: "Failed to trigger report generation",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }

@@ -21,6 +21,9 @@ export const processReportJob = async () => {
   // const from = "2025-04-01T23:00:00.000Z";
   // const to = "2025-04-T23:00:00.000Z";
 
+  console.log("processReportJob started at:", now);
+  console.log("Date range for report:", { from, to });
+
   try {
     const reportSettingCursor = ReportSettingModel.find({
       isEnabled: true,
@@ -29,7 +32,7 @@ export const processReportJob = async () => {
       .populate<{ userId: UserDocument }>("userId")
       .cursor();
 
-    console.log("Running report ");
+    console.log("Running report job - looking for enabled report settings");
 
     for await (const setting of reportSettingCursor) {
       const user = setting.userId as UserDocument;

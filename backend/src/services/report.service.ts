@@ -48,14 +48,21 @@ export const updateReportSettingService = async (
   userId: string,
   body: UpdateReportSettingType
 ) => {
+  console.log("updateReportSettingService called with userId:", userId, "body:", body);
+  
   const { isEnabled } = body;
   let nextReportDate: Date | null = null;
 
   const existingReportSetting = await ReportSettingModel.findOne({
     userId,
   });
-  if (!existingReportSetting)
+  
+  console.log("Found existing report setting:", existingReportSetting);
+  
+  if (!existingReportSetting) {
+    console.log("No report setting found for userId:", userId);
     throw new NotFoundException("Report setting not found");
+  }
 
   //   const frequency =
   //     existingReportSetting.frequency || ReportFrequencyEnum.MONTHLY;
@@ -87,6 +94,8 @@ export const generateReportService = async (
   fromDate: Date,
   toDate: Date
 ) => {
+  console.log("generateReportService called with:", { userId, fromDate, toDate });
+  
   const results = await TransactionModel.aggregate([
     {
       $match: {
