@@ -72,7 +72,8 @@ export const getAllTransactionController = asyncHandler(
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Transactions fetched successfully",
-      data:result
+      transactions: result.transactions,
+      pagination: result.pagination
     });
   }
 );
