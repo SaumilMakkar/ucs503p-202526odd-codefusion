@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "buildCommand": "cd client/Advanced-MERN-AI-Financial-SaaS-Platform && npm install && npm run build",
+  "outputDirectory": "client/Advanced-MERN-AI-Financial-SaaS-Platform/dist",
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
