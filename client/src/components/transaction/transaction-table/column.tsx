@@ -17,6 +17,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -266,13 +267,14 @@ const ActionsCell = ({ row }: { row: any }) => {
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-44" align="end"
-       onCloseAutoFocus={(e) => {
-        if (isDeleting || isDuplicating) {
-          e.preventDefault();
-        }
-      }}
-      >
+      <DropdownMenuPortal>
+        <DropdownMenuContent className="w-44 z-[9999]" align="end"
+         onCloseAutoFocus={(e) => {
+          if (isDeleting || isDuplicating) {
+            e.preventDefault();
+          }
+        }}
+        >
         <DropdownMenuItem onClick={() => onOpenDrawer(transactionId)}>
           <Pencil className="mr-1 h-4 w-4" />
           Edit
@@ -304,7 +306,8 @@ const ActionsCell = ({ row }: { row: any }) => {
               Delete
               {isDeleting && <Loader className="ml-1 h-4 w-4 absolute right-2 animate-spin" />}
             </DropdownMenuItem>
-      </DropdownMenuContent>
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
     </DropdownMenu>
   );
 };

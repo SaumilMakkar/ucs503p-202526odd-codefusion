@@ -29,3 +29,13 @@ export const loginController = asyncHandler(
       });
     }
   );
+
+export const logoutController = asyncHandler(
+    async (req: Request, res: Response) => {
+      // In a stateless JWT system, logout is handled client-side
+      // But we can still provide a success response
+      return res.status(HTTPSTATUS.OK).json({
+        message: "User logged out successfully",
+      });
+    }
+  );
