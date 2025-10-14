@@ -25,17 +25,28 @@ app.use(express.urlencoded({ extended: true }));
 const allowedOrigins = [
     Env.FRONTEND_ORIGIN,
     'http://localhost:5173',
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'https://ucs503p-202526odd-codefusion-1pehglkrc.vercel.app' // Production frontend
 ].filter(Boolean);
+
+console.log('🔒 CORS Allowed Origins:', allowedOrigins);
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl)
-        if (!origin) return callback(null, true);
+        console.log('🌐 Request from origin:', origin);
+        
+        // Allow requests with no origin (like mobile apps, Postman, curl)
+        if (!origin) {
+            console.log('✅ No origin - allowing request');
+            return callback(null, true);
+        }
         
         if (allowedOrigins.indexOf(origin) !== -1) {
+            console.log('✅ Origin allowed:', origin);
             callback(null, true);
         } else {
+            console.log('❌ Origin NOT allowed:', origin);
+            console.log('   Allowed origins are:', allowedOrigins);
             callback(new Error('Not allowed by CORS'));
         }
     },
