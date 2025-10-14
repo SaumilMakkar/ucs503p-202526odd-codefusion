@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "cd client/Advanced-MERN-AI-Financial-SaaS-Platform && npm install && npm run build",
-  "outputDirectory": "client/Advanced-MERN-AI-Financial-SaaS-Platform/dist",
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
   "routes": [
     {
       "handle": "filesystem"
