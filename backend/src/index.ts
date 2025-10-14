@@ -26,8 +26,11 @@ const allowedOrigins = [
     Env.FRONTEND_ORIGIN,
     'http://localhost:5173',
     'http://localhost:3000',
-    'ucs503p-202526odd-codefusion-ue1ns4537.vercel.app' // Production frontend (NO trailing slash!)
+    'https://ucs503p-202526odd-codefusion.vercel.app'
 ].filter(Boolean);
+
+// Normalize origins (remove any trailing slash) for reliable comparison
+const allowedNormalized = allowedOrigins.map((o) => o.replace(/\/+$/, ""));
 
 console.log('🔒 CORS Allowed Origins:', allowedOrigins);
 
@@ -42,7 +45,8 @@ app.use(cors({
             return callback(null, true);
         }
         
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        const normalizedOrigin = origin.replace(/\/+$/, "");
+        if (allowedNormalized.indexOf(normalizedOrigin) !== -1) {
             console.log('✅ Origin allowed:', origin);
             callback(null, true);
         } else {
