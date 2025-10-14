@@ -26,7 +26,7 @@ const allowedOrigins = [
     Env.FRONTEND_ORIGIN,
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://ucs503p-202526odd-codefusion-3d4huwi8a.vercel.app' // Production frontend (NO trailing slash!)
+    'ucs503p-202526odd-codefusion-ue1ns4537.vercel.app' // Production frontend (NO trailing slash!)
 ].filter(Boolean);
 
 console.log('🔒 CORS Allowed Origins:', allowedOrigins);
