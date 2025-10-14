@@ -21,9 +21,25 @@ import { getDateRange } from "./utils/date";
 import analyticsRoutes from "./routes/analytics.routes";
 const BASE_PATH=Env.BASE_PATH
 app.use(express.urlencoded({ extended: true }));
+// Allow multiple origins (local dev + production)
+const allowedOrigins = [
+    Env.FRONTEND_ORIGIN,
+    'http://localhost:5173',
+    'http://localhost:3000'
+].filter(Boolean);
+
 app.use(cors({
-    origin:Env.FRONTEND_ORIGIN,
-    credentials:true
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
 }
 ));
 app.use(passport.initialize());
