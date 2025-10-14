@@ -5,7 +5,6 @@ import { Button } from "../ui/button";
 import { useTransition } from "react";
 import { useAppDispatch } from "@/app/hook";
 import { logout } from "@/features/auth/authSlice";
-import { useLogoutMutation } from "@/features/auth/authAPI";
 import { useNavigate } from "react-router-dom";
 import { AUTH_ROUTES } from "@/routes/common/routePath";
 
@@ -18,19 +17,12 @@ const LogoutDialog = ({ isOpen, setIsOpen }: LogoutDialogProps) => {
     const [isPending, startTransition] = useTransition();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const [logoutMutation] = useLogoutMutation();
 
     const handleLogout = () => {
-      startTransition(async () => {
-        try {
-          await logoutMutation().unwrap();
-        } catch (error) {
-          console.error('Logout API error:', error);
-        } finally {
-          setIsOpen(false);
-          dispatch(logout());
-          navigate(AUTH_ROUTES.SIGN_IN);
-        }
+      startTransition(() => {
+        setIsOpen(false);
+        dispatch(logout());
+        navigate(AUTH_ROUTES.SIGN_IN);
       });
     };
     return (
