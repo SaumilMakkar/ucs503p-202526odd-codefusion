@@ -7,7 +7,7 @@ import Logo from "../logo/logo";
 import { Button } from "../ui/button";
 import { Sheet, SheetContent } from "../ui/sheet";
 import { UserNav } from "./user-nav";
-import LogoutDialog from "./logout-dialog";
+
 import { useTypedSelector } from "@/app/hook";
 
 const Navbar = () => {
@@ -15,7 +15,7 @@ const Navbar = () => {
   const { user } = useTypedSelector((state) => state.auth);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+ 
 
   const routes = [
     {
@@ -115,18 +115,16 @@ const Navbar = () => {
             <div className="flex items-center space-x-4">
               <UserNav
                 userName={user?.name || ""}
-                profilePicture={user?.profilePicture || ""}
-                onLogout={() => setIsLogoutDialogOpen(true)}
+                profilePicture={user?.profilePicture || ""} onLogout={function (): void {
+                  throw new Error("Function not implemented.");
+                } }                
               />
             </div>
           </div>
         </div>
       </header>
 
-      <LogoutDialog
-        isOpen={isLogoutDialogOpen}
-        setIsOpen={setIsLogoutDialogOpen}
-      />
+    
     </>
   );
 };
