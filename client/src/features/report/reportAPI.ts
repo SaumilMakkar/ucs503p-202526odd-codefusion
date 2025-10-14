@@ -1,0 +1,42 @@
+import { apiClient } from "@/app/api-client";
+import { GetAllReportResponse, UpdateReportSettingParams } from "./reportType";
+
+export const reportApi = apiClient.injectEndpoints({
+  endpoints: (builder) => ({
+    
+    getAllReports: builder.query<GetAllReportResponse, {pageNumber: number, pageSize: number}>({
+      query: (params) => {
+        const { pageNumber = 1, pageSize = 20 } = params;
+        return ({
+          url: "/reports/all",
+          method: "GET",
+          params: { pageNumber, pageSize },
+        });
+      },
+    }),
+
+    updateReportSetting: builder.mutation<void, UpdateReportSettingParams>({
+      query: (payload) => {
+        console.log("updateReportSetting API call with payload:", payload);
+        return {
+          url: "/reports/update-setting",
+          method: "PUT",
+          body: payload,
+        };
+      },
+    }),
+
+    triggerReportGeneration: builder.mutation<void, void>({
+      query: () => ({
+        url: "/reports/trigger-generation",
+        method: "POST",
+      }),
+    }),
+  }),
+});
+
+export const {
+    useGetAllReportsQuery,
+    useUpdateReportSettingMutation,
+    useTriggerReportGenerationMutation
+} = reportApi;
