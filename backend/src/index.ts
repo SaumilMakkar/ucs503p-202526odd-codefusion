@@ -34,6 +34,7 @@ console.log('🔒 CORS Allowed Origins:', allowedOrigins);
 app.use(cors({
     origin: (origin, callback) => {
         console.log('🌐 Request from origin:', origin);
+        console.log('🔒 Allowed origins:', allowedOrigins);
         
         // Allow requests with no origin (like mobile apps, Postman, curl)
         if (!origin) {
@@ -46,11 +47,13 @@ app.use(cors({
             callback(null, true);
         } else {
             console.log('❌ Origin NOT allowed:', origin);
-            console.log('   Allowed origins are:', allowedOrigins);
-            callback(new Error('Not allowed by CORS'));
+            // Don't throw error, just reject the origin
+            callback(null, false);
         }
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }
 ));
 app.use(passport.initialize());
