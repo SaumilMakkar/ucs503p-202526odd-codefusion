@@ -7,7 +7,7 @@ import {
   updateReportSettingService,
 } from "../services/report.service";
 import { updateReportSettingSchema } from "../validators/report.validator";
-import { sendReportEmail } from "../mailers/report.mailer";
+import { sendReportEmail, sendReportWhatsApp } from "../mailers/report.mailer";
 
 export const getAllReportsController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -76,9 +76,20 @@ export const sendTestEmailController = asyncHandler(
 
     try {
       await sendReportEmail({
-        email: email as string || req.user?.email!,
+        email: (email as string) || req.user?.email!,
         username: req.user?.name!,
-        report: result,
+        report: {
+          ...result,
+          summary: {
+            ...result.summary,
+            topCategories: result.summary.topCategories.map((cat: any) => ({
+              category: cat.category,
+              name: cat.name,
+              amount: cat.amount,
+              percent: cat.percent,
+            })),
+          }
+        },
         frequency: "Test",
       });
 
@@ -89,6 +100,63 @@ export const sendTestEmailController = asyncHandler(
     } catch (error) {
       return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
         message: "Failed to send email",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+);
+
+export const sendTestWhatsAppController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const { from, to, phoneNumber } = req.query;
+    const fromDate = new Date(from as string);
+    const toDate = new Date(to as string);
+
+    const result = await generateReportService(userId, fromDate, toDate);
+
+    if (!result) {
+      return res.status(HTTPSTATUS.BAD_REQUEST).json({
+        message: "No data found for the specified date range",
+      });
+    }
+
+    const phone = (phoneNumber as string) || req.user?.phoneNumber;
+    if (!phone) {
+      return res.status(HTTPSTATUS.BAD_REQUEST).json({
+        message: "Phone number is required. Please provide phoneNumber in query or update your profile.",
+      });
+    }
+
+    // Ensure phone number has + prefix for E.164 format
+    const formattedPhone = phone.startsWith('+') ? phone : `+${phone}`;
+
+    try {
+      await sendReportWhatsApp({
+        phoneNumber: `whatsapp:${formattedPhone}`,
+        username: req.user?.name!,
+        report: {
+          ...result,
+          summary: {
+            ...result.summary,
+            topCategories: result.summary.topCategories.map((cat: any) => ({
+              category: cat.category,
+              name: cat.name,
+              amount: cat.amount,
+              percent: cat.percent,
+            })),
+          }
+        },
+        frequency: "Test",
+      });
+
+      return res.status(HTTPSTATUS.OK).json({
+        message: "Test WhatsApp message sent successfully",
+        phoneNumber: phone,
+      });
+    } catch (error) {
+      return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
+        message: "Failed to send WhatsApp message",
         error: error instanceof Error ? error.message : "Unknown error",
       });
     }

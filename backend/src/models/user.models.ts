@@ -6,6 +6,7 @@ export interface UserDocument extends Document {
   email: string;
   password: string;
   profilePicture: string | null;
+  phoneNumber?: string; // WhatsApp phone number in E.164 format
   createdAt: Date;
   updatedAt: Date;
   comparePassword: (password: string) => Promise<boolean>;
@@ -29,6 +30,16 @@ const userSchema = new Schema<UserDocument>(
     profilePicture: {
       type: String,
       default: null,
+    },
+    phoneNumber: {
+      type: String,
+      required: false,
+      validate: {
+        validator: function(v: string) {
+          return !v || /^\+[1-9]\d{1,14}$/.test(v); // E.164 format validation
+        },
+        message: 'Phone number must be in E.164 format (e.g., +1234567890)'
+      }
     },
     password: {
       type: String,

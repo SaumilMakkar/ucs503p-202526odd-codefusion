@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import { generateReportService } from "../../services/report.service";
 import ReportModel, { ReportStatusEnum } from "../../models/report.model";
 import { calculateNextReportDate } from "../../utils/helper";
-import { sendReportEmail } from "../../mailers/report.mailer";
+import { sendReportEmail, sendReportWhatsApp } from "../../mailers/report.mailer";
 
 export const processReportJob = async () => {
   const now = new Date();
@@ -49,27 +49,73 @@ export const processReportJob = async () => {
         console.log(report, "resport data");
 
         let emailSent = false;
+        let whatsappSent = false;
+        
         if (report) {
-          try {
-            await sendReportEmail({
-              email: user.email!,
-              username: user.name!,
-              report: {
-                period: report.period,
-                summary: {
-                  income: report.summary.income,
-                  expenses: report.summary.expenses,
-                  balance: report.summary.balance,
-                  savingsRate: report.summary.savingsRate,
-                  topCategories: report.summary.topCategories,
+          // Try to send via WhatsApp if user has phone number
+          if (user.phoneNumber) {
+            try {
+              // Ensure phone number has + prefix for E.164 format
+              const formattedPhone = user.phoneNumber.startsWith('+') ? user.phoneNumber : `+${user.phoneNumber}`;
+              
+              await sendReportWhatsApp({
+                phoneNumber: `whatsapp:${formattedPhone}`,
+                username: user.name!,
+                report: {
+                  period: report.period,
+                  summary: {
+                    income: report.summary.income,
+                    expenses: report.summary.expenses,
+                    balance: report.summary.balance,
+                    savingsRate: report.summary.savingsRate,
+                    topCategories: report.summary.topCategories.map((cat: any) => ({
+                      category: cat.category,
+                      name: cat.name,
+                      amount: cat.amount,
+                      percent: cat.percent,
+                    })),
+                  },
+                  insights: report.insights,
                 },
-                insights: report.insights,
-              },
-              frequency: setting.frequency!,
-            });
-            emailSent = true;
-          } catch (error) {
-            console.log(`Email failed for ${user.id}`);
+                frequency: setting.frequency!,
+              });
+              whatsappSent = true;
+              console.log(`WhatsApp sent successfully for ${user.id}`);
+            } catch (error) {
+              console.log(`WhatsApp failed for ${user.id}:`, error);
+              // Fallback to email if WhatsApp fails
+            }
+          }
+          
+          // Send email as fallback or if no phone number
+          if (!whatsappSent && user.email) {
+            try {
+              await sendReportEmail({
+                email: user.email!,
+                username: user.name!,
+                report: {
+                  period: report.period,
+                  summary: {
+                    income: report.summary.income,
+                    expenses: report.summary.expenses,
+                    balance: report.summary.balance,
+                    savingsRate: report.summary.savingsRate,
+                    topCategories: report.summary.topCategories.map((cat: any) => ({
+                      category: cat.category,
+                      name: cat.name,
+                      amount: cat.amount,
+                      percent: cat.percent,
+                    })),
+                  },
+                  insights: report.insights,
+                },
+                frequency: setting.frequency!,
+              });
+              emailSent = true;
+              console.log(`Email sent successfully for ${user.id}`);
+            } catch (error) {
+              console.log(`Email failed for ${user.id}:`, error);
+            }
           }
         }
 
@@ -78,7 +124,7 @@ export const processReportJob = async () => {
             const bulkReports: any[] = [];
             const bulkSettings: any[] = [];
 
-            if (report && emailSent) {
+            if (report && (emailSent || whatsappSent)) {
               bulkReports.push({
                 insertOne: {
                   document: {
