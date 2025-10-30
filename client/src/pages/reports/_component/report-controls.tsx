@@ -61,14 +61,7 @@ const ReportControls = () => {
         {isGenerating && <Loader className="mr-2 h-4 w-4 animate-spin" />}
         Generate Report Now
       </Button>
-      <Button onClick={handleSendAllTimeWhatsApp} disabled={isSending}>
-        {isSending ? (
-          <Loader className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Send className="mr-2 h-4 w-4" />
-        )}
-        Send All-time to WhatsApp
-      </Button>
+      
     </div>
   );
 };
