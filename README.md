@@ -45,7 +45,7 @@ The AI Expense Tracker simplifies personal and business finance management by el
 
 ## Market Validation
 
-Based on a survey of 48 respondents:
+Based on a survey of 41 respondents:
 - **70.7%** rated expense tracking as critically important (5/5)
 - **85.4%** want automatic receipt scanning and categorization
 - **80.5%** find current tracking methods too time-consuming
