@@ -59,7 +59,7 @@ const ReportControls = () => {
         disabled={isGenerating}
       >
         {isGenerating && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-        Generate Report No
+        Generate Report Now
       </Button>
       
     </div>
