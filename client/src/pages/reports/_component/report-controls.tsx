@@ -61,6 +61,8 @@ const ReportControls = () => {
         {isGenerating && <Loader className="mr-2 h-4 w-4 animate-spin" />}
         Generate Report Now
       </Button>
+
+      <Button>Add Whatsapp</Button>
       
     </div>
   );
