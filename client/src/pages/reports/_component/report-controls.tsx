@@ -62,7 +62,7 @@ const ReportControls = () => {
         Generate Report Now
       </Button>
 
-      <Button>Add Whatsapp</Button>
+      <Button>Add Whatsap</Button>
       
     </div>
   );
