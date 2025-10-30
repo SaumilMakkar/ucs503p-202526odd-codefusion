@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { useUpdateReportSettingMutation, useTriggerReportGenerationMutation } from "@/features/report/reportAPI";
-import { Loader } from "lucide-react";
+import { useUpdateReportSettingMutation, useTriggerReportGenerationMutation, useSendTestWhatsAppMutation } from "@/features/report/reportAPI";
+import { Loader, Send } from "lucide-react";
 import { toast } from "sonner";
+import { formatISO } from "date-fns";
 
 const ReportControls = () => {
   const [updateReportSetting, { isLoading: isUpdating }] = useUpdateReportSettingMutation();
   const [triggerReportGeneration, { isLoading: isGenerating }] = useTriggerReportGenerationMutation();
+  const [sendTestWhatsApp, { isLoading: isSending }] = useSendTestWhatsAppMutation();
 
   const handleEnableReports = async () => {
     try {
@@ -27,6 +29,21 @@ const ReportControls = () => {
     }
   };
 
+  const handleSendAllTimeWhatsApp = async () => {
+    try {
+      const to = new Date();
+      const from = new Date("1970-01-01");
+      await sendTestWhatsApp({
+        from: formatISO(from, { representation: "date" }),
+        to: formatISO(to, { representation: "date" })
+      }).unwrap();
+      toast.success("All-time report sent to your WhatsApp");
+    } catch (error: any) {
+      console.error("Send WhatsApp error:", error);
+      toast.error(error?.data?.message || "Failed to send WhatsApp message");
+    }
+  };
+
   return (
     <div className="flex gap-2">
       <Button 
@@ -43,6 +60,14 @@ const ReportControls = () => {
       >
         {isGenerating && <Loader className="mr-2 h-4 w-4 animate-spin" />}
         Generate Report Now
+      </Button>
+      <Button onClick={handleSendAllTimeWhatsApp} disabled={isSending}>
+        {isSending ? (
+          <Loader className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Send className="mr-2 h-4 w-4" />
+        )}
+        Send All-time to WhatsApp
       </Button>
     </div>
   );

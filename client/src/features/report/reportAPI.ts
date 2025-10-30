@@ -32,11 +32,20 @@ export const reportApi = apiClient.injectEndpoints({
         method: "POST",
       }),
     }),
+
+    sendTestWhatsApp: builder.mutation<void, { from: string; to: string; phoneNumber?: string }>({
+      query: ({ from, to, phoneNumber }) => ({
+        url: "/reports/send-test-whatsapp",
+        method: "GET",
+        params: { from, to, phoneNumber },
+      }),
+    }),
   }),
 });
 
 export const {
     useGetAllReportsQuery,
     useUpdateReportSettingMutation,
-    useTriggerReportGenerationMutation
+    useTriggerReportGenerationMutation,
+    useSendTestWhatsAppMutation
 } = reportApi;
