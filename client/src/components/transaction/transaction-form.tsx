@@ -1,6 +1,6 @@
 import * as z from "zod";
 import { useEffect, useState } from "react";
-import { Calendar, Loader } from "lucide-react";
+import { Calendar, Loader, Mic, Square } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,8 @@ import { useCreateTransactionMutation, useGetSingleTransactionQuery, useUpdateTr
 import { toast } from "sonner";
 import { useDispatch } from 'react-redux';
 import { transactionApi } from '@/features/transaction/transactionAPI';
+import { useVoiceInput } from "@/hooks/use-voice-input";
+import { parseVoiceTransaction, mapCategoryToFormValue, mapPaymentMethodToFormValue } from "@/utils/voice-parser";
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -97,6 +99,9 @@ const TransactionForm = (props: {
   const [updateTransaction, { isLoading: isUpdating }] =
     useUpdateTransactionMutation();
 
+  // Voice input integration
+  const { isListening, transcript, startListening, stopListening, error: voiceError } = useVoiceInput();
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -133,6 +138,35 @@ const TransactionForm = (props: {
       })
     }
   }, [editData, form, isEdit, transactionId]);
+
+  // Parse voice input when transcript is available
+  useEffect(() => {
+    if (!isListening && transcript && transcript.trim().length > 0) {
+      console.log('🎤 Form: Processing transcript:', transcript);
+      const parsed = parseVoiceTransaction(transcript);
+      console.log('🎤 Form: Parsed result:', parsed);
+      
+      if (parsed.title || parsed.amount || parsed.category || parsed.type) {
+        // Fill form with parsed data
+        if (parsed.title) form.setValue('title', parsed.title);
+        if (parsed.amount) form.setValue('amount', parsed.amount);
+        if (parsed.type) form.setValue('type', parsed.type as any);
+        if (parsed.category) form.setValue('category', mapCategoryToFormValue(parsed.category));
+        if (parsed.paymentMethod) {
+          console.log('🎤 Form: Setting payment method from:', parsed.paymentMethod);
+          const mapped = mapPaymentMethodToFormValue(parsed.paymentMethod);
+          console.log('🎤 Form: Setting payment method to:', mapped);
+          form.setValue('paymentMethod', mapped);
+        }
+        if (parsed.date) form.setValue('date', parsed.date);
+        if (parsed.description) form.setValue('description', parsed.description);
+        
+        toast.success('Voice input captured! Review the details.');
+      } else {
+        toast.info('Could not extract transaction details. Please try again with more details.');
+      }
+    }
+  }, [isListening, transcript, form]);
 
   const frequencyOptions = Object.entries(_TRANSACTION_FREQUENCY).map(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -218,6 +252,53 @@ const TransactionForm = (props: {
                 onScanComplete={handleScanComplete}
                 onLoadingChange={setIsScanning}
               />
+            )}
+
+            {/* Voice Input Section */}
+            {!isEdit && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={isListening ? stopListening : startListening}
+                    variant="outline"
+                    disabled={isScanning}
+                    className="flex-1"
+                  >
+                    {isListening ? (
+                      <>
+                        <Square className="mr-2 h-4 w-4 fill-red-500 text-red-500" />
+                        Stop Recording
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="mr-2 h-4 w-4" />
+                        Voice Input
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {isListening && (
+                  <div className="text-xs text-muted-foreground">
+                    🎤 Listening... Speak your transaction details
+                  </div>
+                )}
+                {transcript && !isListening && (
+                  <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
+                    📝 "{transcript}"
+                  </div>
+                )}
+                {voiceError && (
+                  <div className="text-xs text-destructive">
+                    ⚠️ {voiceError}
+                  </div>
+                )}
+                {!isListening && (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Example: "Spent 500 rupees on groceries at Walmart today, paid by card"
+                  </p>
+                )}
+              </div>
             )}
 
             {/* Transaction Type */}
