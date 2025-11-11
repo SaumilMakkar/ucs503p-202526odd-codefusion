@@ -18,6 +18,7 @@ import {
 } from "../services/report.service";
 import { updateReportSettingSchema } from "../validators/report.validator";
 import { sendReportEmail, sendReportWhatsApp } from "../mailers/report.mailer";
+import ReportModel, { ReportStatusEnum } from "../models/report.model";
 export const getAllReportsController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
@@ -322,11 +323,25 @@ export const sendWhatsAppReportController = asyncHandler(
         frequency: "On-demand",
       });
 
+      await ReportModel.create({
+        userId,
+        period: result.period,
+        sentDate: new Date(),
+        status: ReportStatusEnum.SENT,
+      });
+
       return res.status(HTTPSTATUS.OK).json({
         message: "WhatsApp report sent successfully",
         phoneNumber: formattedPhone,
       });
     } catch (error) {
+      await ReportModel.create({
+        userId,
+        period: result.period,
+        sentDate: new Date(),
+        status: ReportStatusEnum.FAILED,
+      });
+
       return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
         message: "Failed to send WhatsApp report",
         error: error instanceof Error ? error.message : "Unknown error",

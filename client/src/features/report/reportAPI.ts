@@ -13,6 +13,16 @@ export const reportApi = apiClient.injectEndpoints({
           params: { pageNumber, pageSize },
         });
       },
+      providesTags: (result) =>
+        result?.reports
+          ? [
+              ...result.reports.map((report) => ({
+                type: "reports" as const,
+                id: report._id,
+              })),
+              { type: "reports" as const, id: "LIST" },
+            ]
+          : [{ type: "reports" as const, id: "LIST" }],
     }),
 
     updateReportSetting: builder.mutation<void, UpdateReportSettingParams>({
@@ -31,6 +41,7 @@ export const reportApi = apiClient.injectEndpoints({
         url: "/reports/trigger-generation",
         method: "POST",
       }),
+      invalidatesTags: [{ type: "reports", id: "LIST" }],
     }),
 
     sendTestWhatsApp: builder.mutation<void, { from: string; to: string; phoneNumber?: string }>({
@@ -39,6 +50,7 @@ export const reportApi = apiClient.injectEndpoints({
         method: "GET",
         params: { from, to, phoneNumber },
       }),
+      invalidatesTags: [{ type: "reports", id: "LIST" }],
     }),
 
     sendWhatsAppReport: builder.mutation<void, SendWhatsAppReportPayload>({
@@ -47,6 +59,7 @@ export const reportApi = apiClient.injectEndpoints({
         method: "POST",
         body: { from, to, phoneNumber },
       }),
+      invalidatesTags: [{ type: "reports", id: "LIST" }],
     }),
   }),
 });
