@@ -27,3 +27,9 @@ export interface GetAllReportResponse {
 export interface UpdateReportSettingParams {
     isEnabled: boolean;
 }
+
+export interface SendWhatsAppReportPayload {
+    from?: string;
+    to?: string;
+    phoneNumber?: string;
+}

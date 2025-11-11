@@ -1,5 +1,5 @@
 import { apiClient } from "@/app/api-client";
-import { GetAllReportResponse, UpdateReportSettingParams } from "./reportType";
+import { GetAllReportResponse, UpdateReportSettingParams, SendWhatsAppReportPayload } from "./reportType";
 
 export const reportApi = apiClient.injectEndpoints({
   endpoints: (builder) => ({
@@ -40,6 +40,14 @@ export const reportApi = apiClient.injectEndpoints({
         params: { from, to, phoneNumber },
       }),
     }),
+
+    sendWhatsAppReport: builder.mutation<void, SendWhatsAppReportPayload>({
+      query: ({ from, to, phoneNumber }) => ({
+        url: "/reports/send-whatsapp-report",
+        method: "POST",
+        body: { from, to, phoneNumber },
+      }),
+    }),
   }),
 });
 
@@ -47,5 +55,6 @@ export const {
     useGetAllReportsQuery,
     useUpdateReportSettingMutation,
     useTriggerReportGenerationMutation,
-    useSendTestWhatsAppMutation
+    useSendTestWhatsAppMutation,
+    useSendWhatsAppReportMutation
 } = reportApi;

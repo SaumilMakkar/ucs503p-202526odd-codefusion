@@ -111,7 +111,7 @@ const TransactionForm = (props: {
       type: _TRANSACTION_TYPE.INCOME,
       category: "",
       date: new Date(),
-      paymentMethod: "",
+      paymentMethod: "" ,// Set default payment method
       isRecurring: false,
       frequency: null,
       description: "",
@@ -142,24 +142,23 @@ const TransactionForm = (props: {
   // Parse voice input when transcript is available
   useEffect(() => {
     if (!isListening && transcript && transcript.trim().length > 0) {
-      console.log('🎤 Form: Processing transcript:', transcript);
       const parsed = parseVoiceTransaction(transcript);
-      console.log('🎤 Form: Parsed result:', parsed);
       
-      if (parsed.title || parsed.amount || parsed.category || parsed.type) {
+      if (parsed.amount || parsed.category || parsed.type) {
         // Fill form with parsed data
-        if (parsed.title) form.setValue('title', parsed.title);
-        if (parsed.amount) form.setValue('amount', parsed.amount);
-        if (parsed.type) form.setValue('type', parsed.type as any);
-        if (parsed.category) form.setValue('category', mapCategoryToFormValue(parsed.category));
-        if (parsed.paymentMethod) {
-          console.log('🎤 Form: Setting payment method from:', parsed.paymentMethod);
-          const mapped = mapPaymentMethodToFormValue(parsed.paymentMethod);
-          console.log('🎤 Form: Setting payment method to:', mapped);
-          form.setValue('paymentMethod', mapped);
+        if (parsed.title) form.setValue('title', parsed.title, { shouldValidate: true });
+        if (parsed.amount) form.setValue('amount', parsed.amount.toString(), { shouldValidate: true });
+        if (parsed.type) form.setValue('type', parsed.type as any, { shouldValidate: true });
+        if (parsed.category) {
+          const mappedCategory = mapCategoryToFormValue(parsed.category);
+          form.setValue('category', mappedCategory, { shouldValidate: true });
         }
-        if (parsed.date) form.setValue('date', parsed.date);
-        if (parsed.description) form.setValue('description', parsed.description);
+        if (parsed.paymentMethod) {
+          const mapped = mapPaymentMethodToFormValue(parsed.paymentMethod);
+          form.setValue('paymentMethod', mapped, { shouldValidate: true });
+        }
+        if (parsed.date) form.setValue('date', parsed.date, { shouldValidate: true });
+        if (parsed.description) form.setValue('description', parsed.description, { shouldValidate: true });
         
         toast.success('Voice input captured! Review the details.');
       } else {

@@ -1,4 +1,4 @@
-import { CATEGORIES, PAYMENT_METHODS, _TRANSACTION_TYPE } from '@/constant';
+import { CATEGORIES, PAYMENT_METHODS, PAYMENT_METHODS_ENUM, _TRANSACTION_TYPE } from '@/constant';
 
 export interface ParsedTransaction {
   title?: string;
@@ -17,10 +17,6 @@ export interface ParsedTransaction {
 export function parseVoiceTransaction(text: string): ParsedTransaction {
   const result: ParsedTransaction = {};
   const lowerText = text.toLowerCase();
-  
-  console.log('🔍 Voice Parser Debug:');
-  console.log('  Input text:', text);
-  console.log('  Lowercase text:', lowerText);
 
   // Extract transaction type (income/expense)
   if (lowerText.includes('income') || lowerText.includes('earn') || lowerText.includes('salary') || lowerText.includes('paid me')) {
@@ -62,11 +58,12 @@ export function parseVoiceTransaction(text: string): ParsedTransaction {
 
   // Extract payment method - improved detection with "by" context
   const paymentKeywords: Record<string, string[]> = {
-    CARD: ['paid by card', 'with card', 'credit card', 'debit card', 'card', 'visa', 'mastercard', 'amex', 'diners'],
-    CASH: ['paid by cash', 'with cash', 'cash', 'money', 'physical cash', 'notes', 'coins'],
-    BANK_TRANSFER: ['by bank transfer', 'bank transfer', 'transfer', 'upi', 'neft', 'imps', 'rtgs', 'swift'],
-    MOBILE_PAYMENT: ['by google pay', 'by phonepe', 'by paytm', 'google pay', 'phonepe', 'paytm', 'mobikwik', 'mobile payment', 'tez', 'bhims'],
-    AUTO_DEBIT: ['by auto debit', 'auto debit', 'auto', 'standing order', 'direct debit', 'recurring'],
+    CARD: ['paid by card', 'with card', 'credit card', 'debit card', 'card', 'visa', 'mastercard', 'amex', 'diners', 'credit', 'debit'],
+    CASH: ['paid by cash', 'with cash', 'cash', 'money', 'physical cash', 'notes', 'coins', 'paid cash', 'in cash'],
+    BANK_TRANSFER: ['by bank transfer', 'bank transfer', 'transfer', 'upi', 'neft', 'imps', 'rtgs', 'swift', 'net banking', 'bank payment'],
+    MOBILE_PAYMENT: ['by google pay', 'by phonepe', 'by paytm', 'google pay', 'phonepe', 'paytm', 'mobikwik', 'mobile payment', 'tez', 'bhim', 'online payment', 'gpay'],
+    AUTO_DEBIT: ['by auto debit', 'auto debit', 'standing order', 'direct debit', 'recurring payment', 'automatic payment'],
+    OTHER: ['other payment', 'other method']
   };
 
   // Check for payment methods (prioritize longer phrases first)
@@ -77,19 +74,13 @@ export function parseVoiceTransaction(text: string): ParsedTransaction {
     return maxLenB - maxLenA;
   });
 
-  console.log('  Checking payment methods with sorted order...');
   for (const [method, keywords] of sortedMethods) {
     const foundKeyword = keywords.find(keyword => lowerText.includes(keyword));
     if (foundKeyword) {
-      console.log(`  ✅ Found payment method: ${method} (matched: "${foundKeyword}")`);
       result.paymentMethod = method;
       break;
-    } else {
-      console.log(`  ❌ ${method}: no match`);
     }
   }
-  console.log('  Final payment method:', result.paymentMethod);
-  console.log('  Final parsed result:', result);
 
   // Extract date information
   const today = new Date();
@@ -168,12 +159,22 @@ export function mapCategoryToFormValue(category: string): string {
  * Maps parsed payment method to the exact value expected by the form
  */
 export function mapPaymentMethodToFormValue(method: string): string {
+  // Early return if method is undefined
+  if (!method) return PAYMENT_METHODS_ENUM.CASH;
+  
+  // Direct mapping if it matches the enum exactly
+  const validMethods = Object.values(PAYMENT_METHODS_ENUM);
+  if (validMethods.includes(method as keyof typeof PAYMENT_METHODS_ENUM)) {
+    return method;
+  }
+
+  // Create mapping object from PAYMENT_METHODS
   const methodMap: Record<string, string> = {};
   PAYMENT_METHODS.forEach(m => {
     methodMap[m.value.toLowerCase()] = m.value;
   });
-  const mapped = methodMap[method.toLowerCase()] || method;
-  console.log(`  Mapping "${method}" to:`, mapped);
+
+  const mapped = methodMap[method.toLowerCase()] || PAYMENT_METHODS_ENUM.CASH;
   return mapped;
 }
 

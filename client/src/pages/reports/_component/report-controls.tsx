@@ -1,23 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { useUpdateReportSettingMutation, useTriggerReportGenerationMutation, useSendTestWhatsAppMutation } from "@/features/report/reportAPI";
+import { useTriggerReportGenerationMutation, useSendWhatsAppReportMutation } from "@/features/report/reportAPI";
 import { Loader, Send } from "lucide-react";
 import { toast } from "sonner";
-import { formatISO } from "date-fns";
 
 const ReportControls = () => {
-  const [updateReportSetting, { isLoading: isUpdating }] = useUpdateReportSettingMutation();
   const [triggerReportGeneration, { isLoading: isGenerating }] = useTriggerReportGenerationMutation();
-  const [sendTestWhatsApp, { isLoading: isSending }] = useSendTestWhatsAppMutation();
-
-  const handleEnableReports = async () => {
-    try {
-      await updateReportSetting({ isEnabled: true }).unwrap();
-      toast.success("Reports have been enabled successfully!");
-    } catch (error: any) {
-      console.error("Error enabling reports:", error);
-      toast.error(error.data?.message || "Failed to enable reports");
-    }
-  };
+  const [sendWhatsAppReport, { isLoading: isSending }] = useSendWhatsAppReportMutation();
 
   const handleGenerateReport = async () => {
     try {
@@ -31,13 +19,10 @@ const ReportControls = () => {
 
   const handleSendAllTimeWhatsApp = async () => {
     try {
-      const to = new Date();
-      const from = new Date("1970-01-01");
-      await sendTestWhatsApp({
-        from: formatISO(from, { representation: "date" }),
-        to: formatISO(to, { representation: "date" })
+      await sendWhatsAppReport({
+        phoneNumber: "919501726922",
       }).unwrap();
-      toast.success("All-time report sent to your WhatsApp");
+      toast.success("All-time report sent to WhatsApp number +919501726922");
     } catch (error: any) {
       console.error("Send WhatsApp error:", error);
       toast.error(error?.data?.message || "Failed to send WhatsApp message");
@@ -47,14 +32,6 @@ const ReportControls = () => {
   return (
     <div className="flex gap-2">
       <Button 
-        variant="outline" 
-        onClick={handleEnableReports}
-        disabled={isUpdating}
-      >
-        {isUpdating && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-        Enable Reports
-      </Button>
-      <Button 
         onClick={handleGenerateReport}
         disabled={isGenerating}
       >
@@ -62,8 +39,19 @@ const ReportControls = () => {
         Generate Report Now
       </Button>
 
-      <Button>Add Whatsap</Button>
-      
+      <Button
+        className="bg-blue-500 text-white hover:bg-blue-600"
+        variant="outline"
+        onClick={handleSendAllTimeWhatsApp}
+        disabled={isSending}
+      >
+        {isSending ? (
+          <Loader className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Send className="mr-2 h-4 w-4" />
+        )}
+        Send WhatsApp Report
+      </Button>
     </div>
   );
 };
