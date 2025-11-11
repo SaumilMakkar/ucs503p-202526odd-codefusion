@@ -30,7 +30,8 @@ The AI Expense Tracker simplifies personal and business finance management by el
 - **Smart Transaction Management** - Create, edit, and delete transactions with automatic categorization
 - **Advanced Analytics** - MongoDB aggregate pipelines powering expense breakdown pie charts and income/expense line charts
 - **Recurring Transactions** - Automated scheduled entries using cron jobs
-- **Monthly Reports** - Auto-generated financial summaries emailed to users
+- **Monthly Reports** - Auto-generated financial summaries sent to users via whatsapp
+- **Voice Assistant**-Creation of transactions via voice assistant
 - **Flexible Filtering** - Filter transactions by date ranges (Last 30 Days, custom periods)
 - **CSV Import/Export** - Bulk transaction management
 
