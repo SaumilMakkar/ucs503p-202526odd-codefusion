@@ -27,7 +27,7 @@ const allowedOrigins = [
     Env.FRONTEND_ORIGIN,
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://ucs503p-202526odd-codefusion.vercel.app'
+    'https://ucs503p-202526odd-codefusion-zdge.vercel.app'
 ].filter(Boolean);
 
 // Normalize origins (remove any trailing slash) for reliable comparison
