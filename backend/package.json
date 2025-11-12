@@ -44,6 +44,7 @@
     "node-cron": "3.0.3",
     "passport": "0.7.0",
     "passport-jwt": "4.0.1",
+    "razorpay": "^2.9.6",
     "resend": "3.2.0",
     "twilio": "^4.23.0",
     "typescript": "^5.8.3",

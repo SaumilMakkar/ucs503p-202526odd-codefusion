@@ -20,5 +20,10 @@ export const loginSchema = z.object({
   password: passwordSchema,
 });
 
+export const googleAuthSchema = z.object({
+  credential: z.string().min(1, "Missing Google credential"),
+});
+
 export type RegisterSchemaType = z.infer<typeof registerSchema>;
 export type LoginSchemaType = z.infer<typeof loginSchema>;
+export type GoogleAuthSchemaType = z.infer<typeof googleAuthSchema>;

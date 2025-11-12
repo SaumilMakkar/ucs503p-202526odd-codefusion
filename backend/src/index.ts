@@ -19,6 +19,7 @@ import { initializeCrons } from "./crons";
 import reportRoutes from "./routes/report.route";
 import { getDateRange } from "./utils/date";
 import analyticsRoutes from "./routes/analytics.routes";
+import billingRoutes from "./routes/billing.route";
 const BASE_PATH=Env.BASE_PATH
 app.use(express.urlencoded({ extended: true }));
 // Allow multiple origins (local dev + production)
@@ -80,6 +81,7 @@ app.use(`${BASE_PATH}/user`, passportAuthenticateJwt,userRoutes )
 app.use(`${BASE_PATH}/transaction`, passportAuthenticateJwt,transactionRoutes )
 app.use(`${BASE_PATH}/reports`, passportAuthenticateJwt, reportRoutes);
 app.use(`${BASE_PATH}/analytics`, passportAuthenticateJwt,analyticsRoutes );
+app.use(`${BASE_PATH}/billing`, passportAuthenticateJwt,billingRoutes );
 app.use(errorHandler);
 
 (async () => {

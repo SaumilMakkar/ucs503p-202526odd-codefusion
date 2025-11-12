@@ -3,6 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import {
+  useCreateOrderMutation,
+  useVerifyPaymentMutation,
+} from "@/features/billing/billingAPI"
 
 type RazorpayPrefill = {
   name?: string
@@ -104,6 +108,10 @@ const Billing = () => {
   >("idle")
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
 
+  const [createOrder, { isLoading: isCreatingOrder }] = useCreateOrderMutation()
+  const [verifyPayment, { isLoading: isVerifyingPayment }] =
+    useVerifyPaymentMutation()
+
   const razorpayKey = useMemo(
     () => import.meta.env.VITE_RAZORPAY_KEY_ID ?? "",
     []
@@ -124,6 +132,26 @@ const Billing = () => {
     return () => {
       mounted = false
     }
+  }, [])
+
+  const isProcessing =
+    paymentStatus === "loading" || isCreatingOrder || isVerifyingPayment
+
+  const getErrorMessage = useCallback((error: unknown) => {
+    if (!error) return "Something went wrong. Please try again."
+    if (typeof error === "string") return error
+    if (error instanceof Error) return error.message
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "data" in error &&
+      (error as any).data &&
+      typeof (error as any).data === "object" &&
+      "message" in (error as any).data
+    ) {
+      return String((error as any).data.message)
+    }
+    return "Something went wrong. Please try again."
   }, [])
 
   const handlePurchase = useCallback(
@@ -149,30 +177,64 @@ const Billing = () => {
       }
 
       setPaymentStatus("loading")
-      setStatusMessage("Opening Razorpay checkout…")
+      setStatusMessage("Creating a secure checkout session…")
 
       try {
-        // In production, create an order on your backend and pass the order_id to Razorpay options.
+        const { order, plan: planDetails, customer } = await createOrder(plan.id).unwrap()
+
         const options: RazorpayOptions = {
           key: razorpayKey,
-          amount: plan.amountInPaise,
-          currency: "INR",
-          name: "CodeFusion Premium",
-          description: `${plan.name} subscription`,
-          handler: (response: RazorpaySuccessResponse) => {
-            setPaymentStatus("success")
-            setStatusMessage(
-              `Payment successful! Reference ID: ${response.razorpay_payment_id}. You will receive an onboarding email shortly.`
-            )
+          amount: order.amount,
+          currency: order.currency,
+          name: "Finora Premium",
+          description: `${planDetails.name} subscription`,
+          order_id: order.id,
+          handler: async (response: RazorpaySuccessResponse) => {
+            if (
+              !response.razorpay_order_id ||
+              !response.razorpay_signature ||
+              !response.razorpay_payment_id
+            ) {
+              setPaymentStatus("failed")
+              setStatusMessage(
+                "We could not verify the payment details returned by Razorpay. Please contact support."
+              )
+              return
+            }
+
+            setStatusMessage("Verifying payment with Razorpay…")
+            setPaymentStatus("loading")
+
+            try {
+              await verifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }).unwrap()
+
+              setPaymentStatus("success")
+              setStatusMessage(
+                `Payment successful! Reference ID: ${response.razorpay_payment_id}. Premium access will activate shortly.`
+              )
+            } catch (verificationError) {
+              setPaymentStatus("failed")
+              setStatusMessage(
+                `${getErrorMessage(
+                  verificationError
+                )} If you were charged, please share the payment ID ${
+                  response.razorpay_payment_id
+                } with support so we can assist.`
+              )
+            }
           },
           prefill: {
-            name: "CodeFusion User",
-            email: "user@example.com",
-            contact: "+911234567890",
+            name: customer?.name || "Finora User",
+            email: customer?.email || "",
           },
           notes: {
-            ...plan.notes,
-            planId: plan.id,
+            billingOrderId: order.billingOrderId,
+            planId: planDetails.id,
+            planInterval: planDetails.interval,
           },
           theme: {
             color: "#0f172a",
@@ -180,6 +242,7 @@ const Billing = () => {
         }
 
         const razorpay = new window.Razorpay(options)
+        setStatusMessage("Complete the payment in the secure Razorpay window to continue.")
         razorpay.open()
         razorpay.on("payment.failed", () => {
           setPaymentStatus("failed")
@@ -189,14 +252,16 @@ const Billing = () => {
         })
       } catch (error) {
         setPaymentStatus("failed")
-        setStatusMessage(
-          error instanceof Error
-            ? error.message
-            : "We could not start the payment. Please try again."
-        )
+        setStatusMessage(getErrorMessage(error))
       }
     },
-    [isScriptReady, razorpayKey]
+    [
+      createOrder,
+      getErrorMessage,
+      isScriptReady,
+      razorpayKey,
+      verifyPayment,
+    ]
   )
 
   return (
@@ -206,7 +271,7 @@ const Billing = () => {
           Premium Access
         </Badge>
         <h1 className="mt-5 text-3xl font-semibold">
-          Upgrade to CodeFusion Premium
+          Upgrade to Finora Premium
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-white/80">
           Unlock advanced collaboration, analytics, and priority support designed
@@ -286,10 +351,10 @@ const Billing = () => {
             <div className="mt-8">
               <Button
                 className="w-full"
-                disabled={paymentStatus === "loading"}
+                disabled={isProcessing}
                 onClick={() => handlePurchase(plan.id)}
               >
-                {paymentStatus === "loading"
+                {isProcessing
                   ? "Launching Razorpay…"
                   : "Buy Now"}
               </Button>

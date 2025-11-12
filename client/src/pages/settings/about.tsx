@@ -2,9 +2,9 @@ const AboutUs = () => {
   return (
     <div className="space-y-12">
       <section className="rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-sky-400 px-8 py-10 text-white shadow-lg">
-        <h1 className="text-3xl font-semibold">About CodeFusion</h1>
+        <h1 className="text-3xl font-semibold">About Finora</h1>
         <p className="mt-3 max-w-3xl text-base text-white/90">
-          CodeFusion is a collaborative platform designed to help teams ideate,
+          Finora is a collaborative platform designed to help teams ideate,
           plan, and deliver software with confidence. From product discovery to
           release readiness, we bring every workflow into one streamlined,
           beautifully crafted experience.
@@ -41,10 +41,10 @@ const AboutUs = () => {
             How We Make A Difference
           </h2>
           <p className="text-sm text-gray-600">
-            CodeFusion brings clarity to complex projects. Our intelligent
+            Finora brings clarity to complex projects. Our intelligent
             automations surface risks before they become blockers, while our
             analytics help teams forecast impact with precision. Whether you are
-            shipping your first product or scaling globally, CodeFusion adapts to
+            shipping your first product or scaling globally, Finora adapts to
             your workflow and grows with you.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
