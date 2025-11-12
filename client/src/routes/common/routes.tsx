@@ -7,6 +7,7 @@ import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Account from "@/pages/settings/account";
 import Appearance from "@/pages/settings/appearance";
+import About from "@/pages/settings/about";
 import Billing from "@/pages/settings/billing";
 
 export const authenticationRoutePaths = [
@@ -24,6 +25,7 @@ export const protectedRoutePaths = [
       { index: true, element: <Account /> }, // Default route
       { path: PROTECTED_ROUTES.SETTINGS, element: <Account /> },
       { path: PROTECTED_ROUTES.SETTINGS_APPEARANCE, element: <Appearance /> },
+      { path: PROTECTED_ROUTES.SETTINGS_ABOUT, element: <About /> },
       { path: PROTECTED_ROUTES.SETTINGS_BILLING, element: <Billing /> },
     ]
   },
