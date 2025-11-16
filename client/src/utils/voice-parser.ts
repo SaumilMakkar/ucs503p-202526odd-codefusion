@@ -99,19 +99,79 @@ export function parseVoiceTransaction(text: string): ParsedTransaction {
     }
   }
 
-  // Extract merchant/title (words before keywords)
-  const titleIndicators = ['at', 'from', 'in', 'to', 'bought', 'spent', 'paid', 'store', 'shop', 'merchant'];
-  for (const indicator of titleIndicators) {
-    const index = lowerText.indexOf(indicator);
-    if (index > 0) {
-      const potentialTitle = text.substring(0, index).trim();
-      // Clean up common prefixes
-      const cleanedTitle = potentialTitle
-        .replace(/^(spent|bought|paid|expense|income|earn|received)\s+/i, '')
+  // Extract title from patterns like "spent X on Y" or "paid X for Y"
+  // Priority: Extract text after "on" or "for" when preceded by spending/expense keywords
+  // Look for patterns: "spent/paid/bought [amount] [currency] on [title]" or "spent/paid/bought [amount] [currency] for [title]"
+  const onIndex = lowerText.indexOf(' on ');
+  const forIndex = lowerText.indexOf(' for ');
+  
+  // Check if "on" appears after spending keywords and amount
+  if (onIndex > -1) {
+    const beforeOn = lowerText.substring(0, onIndex);
+    const afterOn = text.substring(onIndex + 4).trim(); // +4 for " on "
+    
+    // Check if before "on" contains spending keywords and amount
+    const hasSpendingKeyword = /\b(spent|paid|bought|spend|pay|buy)\b/i.test(beforeOn);
+    const hasAmount = /\d+/.test(beforeOn) || /(?:₹|rs|rupees?|dollars?|inr|\$)/i.test(beforeOn);
+    
+    if (hasSpendingKeyword && hasAmount && afterOn.length > 0) {
+      let extractedTitle = afterOn;
+      // Remove trailing payment method, date, or other indicators
+      extractedTitle = extractedTitle
+        .replace(/\s+(?:today|yesterday|tomorrow|paid\s+by|by|via|at|from|₹|rs|rupees|dollars).*$/i, '')
         .trim();
-      if (cleanedTitle.length > 0 && cleanedTitle.length < 50) {
-        result.title = cleanedTitle;
-        break;
+      // Capitalize first letter of each word for better readability
+      extractedTitle = extractedTitle
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      if (extractedTitle.length > 0 && extractedTitle.length < 100) {
+        result.title = extractedTitle;
+      }
+    }
+  }
+  
+  // Check "for" pattern if "on" didn't match
+  if (!result.title && forIndex > -1) {
+    const beforeFor = lowerText.substring(0, forIndex);
+    const afterFor = text.substring(forIndex + 5).trim(); // +5 for " for "
+    
+    // Check if before "for" contains spending keywords and amount
+    const hasSpendingKeyword = /\b(spent|paid|bought|spend|pay|buy)\b/i.test(beforeFor);
+    const hasAmount = /\d+/.test(beforeFor) || /(?:₹|rs|rupees?|dollars?|inr|\$)/i.test(beforeFor);
+    
+    if (hasSpendingKeyword && hasAmount && afterFor.length > 0) {
+      let extractedTitle = afterFor;
+      // Remove trailing payment method, date, or other indicators
+      extractedTitle = extractedTitle
+        .replace(/\s+(?:today|yesterday|tomorrow|paid\s+by|by|via|at|from|₹|rs|rupees|dollars).*$/i, '')
+        .trim();
+      // Capitalize first letter of each word for better readability
+      extractedTitle = extractedTitle
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      if (extractedTitle.length > 0 && extractedTitle.length < 100) {
+        result.title = extractedTitle;
+      }
+    }
+  }
+
+  // Extract merchant/title (words before keywords) - fallback for other patterns
+  if (!result.title) {
+    const titleIndicators = ['at', 'from', 'in', 'to', 'bought', 'spent', 'paid', 'store', 'shop', 'merchant'];
+    for (const indicator of titleIndicators) {
+      const index = lowerText.indexOf(indicator);
+      if (index > 0) {
+        const potentialTitle = text.substring(0, index).trim();
+        // Clean up common prefixes
+        const cleanedTitle = potentialTitle
+          .replace(/^(spent|bought|paid|expense|income|earn|received)\s+/i, '')
+          .trim();
+        if (cleanedTitle.length > 0 && cleanedTitle.length < 50) {
+          result.title = cleanedTitle;
+          break;
+        }
       }
     }
   }

@@ -1,5 +1,6 @@
 import "dotenv/config";
 import './config/passport.config'
+import './config/google.config'
 import express,{NextFunction,Request,Response} from "express";
 import { Env } from "./config/env.config";
 import cors from "cors";

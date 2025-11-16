@@ -44,6 +44,28 @@ The AI Expense Tracker simplifies personal and business finance management by el
 **Authentication:** JWT  
 **Automation:** Cron Jobs
 
+## Google OAuth
+
+Google Sign-In is supported in addition to email/password.
+
+Backend env (set in your deployment environment or `.env`):
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_CALLBACK_URL` (e.g. `http://localhost:8000/api/auth/google/callback`)
+- `FRONTEND_ORIGIN` (e.g. `http://localhost:5173`)
+
+Client env:
+
+- `VITE_API_URL` (e.g. `http://localhost:8000/api`)
+
+Setup:
+
+1) Install backend dep in `backend`:
+   - `npm install passport-google-oauth20`
+2) In Google Cloud Console, create OAuth credentials and add an authorized redirect URI matching `GOOGLE_CALLBACK_URL`.
+3) Start backend and client. From the sign-in page, click "Continue with Google" to authenticate.
+
 ## Market Validation
 
 Based on a survey of 48 respondents:
