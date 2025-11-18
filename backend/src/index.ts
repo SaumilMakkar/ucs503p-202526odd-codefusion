@@ -23,6 +23,7 @@ import { getDateRange } from "./utils/date";
 import analyticsRoutes from "./routes/analytics.routes";
 import billingRoutes from "./routes/billing.route";
 import chatbotRoutes from "./routes/chatbot.route";
+import complaintRoutes from "./routes/complaint.route";
 const BASE_PATH=Env.BASE_PATH
 app.use(express.urlencoded({ extended: true }));
 // Allow multiple origins (local dev + production)
@@ -89,6 +90,7 @@ app.use(`${BASE_PATH}/reports`, passportAuthenticateJwt, reportRoutes);
 app.use(`${BASE_PATH}/analytics`, passportAuthenticateJwt,analyticsRoutes );
 app.use(`${BASE_PATH}/billing`, passportAuthenticateJwt,billingRoutes );
 app.use(`${BASE_PATH}/chatbot`, chatbotRoutes);
+app.use(`${BASE_PATH}/complaint`, complaintRoutes);
 app.use(errorHandler);
 
 (async () => {

@@ -1,7 +1,8 @@
 import AppRoutes from "./routes";
 import { ThemeProvider } from "./context/theme-provider";
-// Import chatbot API to ensure it's registered with RTK Query
+// Import APIs to ensure they're registered with RTK Query
 import "./features/chatbot/chatbotAPI";
+import "./features/complaint/complaintAPI";
 
 function App() {
   return (
