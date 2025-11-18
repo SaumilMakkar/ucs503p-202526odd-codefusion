@@ -1,4 +1,68 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { useSubmitComplaintMutation } from "@/features/complaint/complaintAPI";
+import { Loader2 } from "lucide-react";
+
+/**
+ * Complaint form validation schema
+ */
+const complaintSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, "Full name must be at least 2 characters")
+    .max(100, "Full name is too long"),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .max(255, "Email is too long"),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^\+?[\d\s\-()]+$/.test(val),
+      "Invalid phone number format"
+    ),
+  subject: z
+    .string()
+    .min(5, "Subject must be at least 5 characters")
+    .max(200, "Subject is too long"),
+  message: z
+    .string()
+    .min(10, "Message must be at least 10 characters")
+    .max(5000, "Message is too long"),
+});
+
+type ComplaintFormValues = z.infer<typeof complaintSchema>;
+
 const AboutUs = () => {
+  const [submitComplaint, { isLoading: isSubmitting }] = useSubmitComplaintMutation();
+  
+  const form = useForm<ComplaintFormValues>({
+    resolver: zodResolver(complaintSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+      subject: "",
+      message: "",
+    },
+  });
+
+  const onSubmit = async (data: ComplaintFormValues) => {
+    try {
+      const response = await submitComplaint(data).unwrap();
+      toast.success(response.message || "Complaint submitted successfully!");
+      form.reset();
+    } catch (error: any) {
+      console.error("Complaint submission error:", error);
+      toast.error(
+        error?.data?.message || "Failed to submit complaint. Please try again."
+      );
+    }
+  };
+
   return (
     <div className="space-y-12">
       <section className="rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-sky-400 px-8 py-10 text-white shadow-lg">
@@ -152,7 +216,10 @@ const AboutUs = () => {
             </ul>
           </div>
 
-          <form className="space-y-5 rounded-xl border border-slate-100 bg-slate-50 p-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-5 rounded-xl border border-slate-100 bg-slate-50 p-6"
+          >
             <div>
               <label
                 className="text-sm font-medium text-gray-800"
@@ -161,12 +228,22 @@ const AboutUs = () => {
                 Full Name
               </label>
               <input
-                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring focus:ring-blue-500/30"
+                {...form.register("fullName")}
+                className={`mt-2 w-full rounded-lg border bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring focus:ring-blue-500/30 ${
+                  form.formState.errors.fullName
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-slate-200 focus:border-blue-500"
+                }`}
                 id="fullName"
-                name="fullName"
                 placeholder="Jane Doe"
                 type="text"
+                disabled={isSubmitting}
               />
+              {form.formState.errors.fullName && (
+                <p className="mt-1 text-xs text-red-500">
+                  {form.formState.errors.fullName.message}
+                </p>
+              )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -177,12 +254,22 @@ const AboutUs = () => {
                   Email
                 </label>
                 <input
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring focus:ring-blue-500/30"
+                  {...form.register("email")}
+                  className={`mt-2 w-full rounded-lg border bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring focus:ring-blue-500/30 ${
+                    form.formState.errors.email
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-slate-200 focus:border-blue-500"
+                  }`}
                   id="email"
-                  name="email"
                   placeholder="jane@company.com"
                   type="email"
+                  disabled={isSubmitting}
                 />
+                {form.formState.errors.email && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -192,12 +279,22 @@ const AboutUs = () => {
                   Phone (optional)
                 </label>
                 <input
-                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring focus:ring-blue-500/30"
+                  {...form.register("phone")}
+                  className={`mt-2 w-full rounded-lg border bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring focus:ring-blue-500/30 ${
+                    form.formState.errors.phone
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-slate-200 focus:border-blue-500"
+                  }`}
                   id="phone"
-                  name="phone"
                   placeholder="+1 (555) 123-4567"
                   type="tel"
+                  disabled={isSubmitting}
                 />
+                {form.formState.errors.phone && (
+                  <p className="mt-1 text-xs text-red-500">
+                    {form.formState.errors.phone.message}
+                  </p>
+                )}
               </div>
             </div>
             <div>
@@ -208,12 +305,22 @@ const AboutUs = () => {
                 Subject
               </label>
               <input
-                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring focus:ring-blue-500/30"
+                {...form.register("subject")}
+                className={`mt-2 w-full rounded-lg border bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring focus:ring-blue-500/30 ${
+                  form.formState.errors.subject
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-slate-200 focus:border-blue-500"
+                }`}
                 id="subject"
-                name="subject"
                 placeholder="Brief title for your issue"
                 type="text"
+                disabled={isSubmitting}
               />
+              {form.formState.errors.subject && (
+                <p className="mt-1 text-xs text-red-500">
+                  {form.formState.errors.subject.message}
+                </p>
+              )}
             </div>
             <div>
               <label
@@ -223,17 +330,35 @@ const AboutUs = () => {
                 Details
               </label>
               <textarea
-                className="mt-2 h-32 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring focus:ring-blue-500/30"
+                {...form.register("message")}
+                className={`mt-2 h-32 w-full rounded-lg border bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring focus:ring-blue-500/30 ${
+                  form.formState.errors.message
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-slate-200 focus:border-blue-500"
+                }`}
                 id="message"
-                name="message"
                 placeholder="Let us know what happened, what you expected, and how we can help."
+                disabled={isSubmitting}
               />
+              {form.formState.errors.message && (
+                <p className="mt-1 text-xs text-red-500">
+                  {form.formState.errors.message.message}
+                </p>
+              )}
             </div>
             <button
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-500/30"
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               type="submit"
+              disabled={isSubmitting}
             >
-              Submit Complaint
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Complaint"
+              )}
             </button>
             <p className="text-xs text-gray-500">
               By submitting, you consent to us storing your information so we can
