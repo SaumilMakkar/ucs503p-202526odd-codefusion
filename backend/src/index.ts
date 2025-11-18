@@ -1,5 +1,6 @@
 import "dotenv/config";
 import './config/passport.config'
+import './config/google.config'
 import express,{NextFunction,Request,Response} from "express";
 import { Env } from "./config/env.config";
 import cors from "cors";
@@ -19,6 +20,7 @@ import { initializeCrons } from "./crons";
 import reportRoutes from "./routes/report.route";
 import { getDateRange } from "./utils/date";
 import analyticsRoutes from "./routes/analytics.routes";
+import billingRoutes from "./routes/billing.route";
 const BASE_PATH=Env.BASE_PATH
 app.use(express.urlencoded({ extended: true }));
 // Allow multiple origins (local dev + production)
@@ -26,7 +28,7 @@ const allowedOrigins = [
     Env.FRONTEND_ORIGIN,
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://ucs503p-202526odd-codefusion.vercel.app'
+    'https://ucs503p-202526odd-codefusion-zdge.vercel.app'
 ].filter(Boolean);
 
 // Normalize origins (remove any trailing slash) for reliable comparison
@@ -57,7 +59,10 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Type'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }
 ));
 app.use(passport.initialize());
@@ -80,6 +85,7 @@ app.use(`${BASE_PATH}/user`, passportAuthenticateJwt,userRoutes )
 app.use(`${BASE_PATH}/transaction`, passportAuthenticateJwt,transactionRoutes )
 app.use(`${BASE_PATH}/reports`, passportAuthenticateJwt, reportRoutes);
 app.use(`${BASE_PATH}/analytics`, passportAuthenticateJwt,analyticsRoutes );
+app.use(`${BASE_PATH}/billing`, passportAuthenticateJwt,billingRoutes );
 app.use(errorHandler);
 
 (async () => {

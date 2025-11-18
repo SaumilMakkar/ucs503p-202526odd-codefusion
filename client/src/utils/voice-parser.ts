@@ -1,0 +1,240 @@
+import { CATEGORIES, PAYMENT_METHODS, PAYMENT_METHODS_ENUM, _TRANSACTION_TYPE } from '@/constant';
+
+export interface ParsedTransaction {
+  title?: string;
+  amount?: string;
+  type?: string;
+  category?: string;
+  paymentMethod?: string;
+  date?: Date;
+  description?: string;
+}
+
+/**
+ * Parses voice input to extract transaction details
+ * This uses pattern matching and keyword detection
+ */
+export function parseVoiceTransaction(text: string): ParsedTransaction {
+  const result: ParsedTransaction = {};
+  const lowerText = text.toLowerCase();
+
+  // Extract transaction type (income/expense)
+  if (lowerText.includes('income') || lowerText.includes('earn') || lowerText.includes('salary') || lowerText.includes('paid me')) {
+    result.type = _TRANSACTION_TYPE.INCOME;
+  } else if (lowerText.includes('expense') || lowerText.includes('spend') || lowerText.includes('bought') || lowerText.includes('paid')) {
+    result.type = _TRANSACTION_TYPE.EXPENSE;
+  }
+
+  // Extract amount - look for currency patterns
+  const amountRegex = /(?:₹|rs|rupees?|dollars?|inr|\$|\b)(\s*)?(\d+(?:[.,]\d+)?)/gi;
+  const amountMatch = text.match(amountRegex);
+  if (amountMatch) {
+    // Extract the numeric part
+    const numericPart = amountMatch[0].replace(/[₹rs\s,rupees?dollars?inr$]/gi, '');
+    result.amount = numericPart.replace(',', '.');
+  }
+
+  // Extract category from known categories
+  const categoryKeywords = {
+    groceries: ['grocery', 'food', 'grocery store', 'supermarket'],
+    dining: ['restaurant', 'cafe', 'coffee', 'lunch', 'dinner', 'breakfast', 'meal', 'burger', 'pizza'],
+    transportation: ['taxi', 'uber', 'petrol', 'fuel', 'gas', 'bus', 'metro', 'train', 'cab'],
+    utilities: ['electricity', 'water', 'phone', 'internet', 'wifi', 'utility', 'bill'],
+    entertainment: ['movie', 'cinema', 'streaming', 'netflix', 'music', 'games', 'entertainment'],
+    shopping: ['shopping', 'mall', 'store', 'clothes', 'shoes', 'online shopping'],
+    healthcare: ['medicine', 'pharmacy', 'doctor', 'hospital', 'medical', 'health'],
+    travel: ['hotel', 'flight', 'ticket', 'vacation', 'travel', 'trip'],
+    housing: ['rent', 'mortgage', 'house', 'apartment', 'room'],
+    income: ['salary', 'income', 'payment', 'freelance', 'job'],
+    investments: ['investment', 'stocks', 'mutual fund', 'savings'],
+  };
+
+  for (const [category, keywords] of Object.entries(categoryKeywords)) {
+    if (keywords.some(keyword => lowerText.includes(keyword))) {
+      result.category = category;
+      break;
+    }
+  }
+
+  // Extract payment method - improved detection with "by" context
+  const paymentKeywords: Record<string, string[]> = {
+    CARD: ['paid by card', 'with card', 'credit card', 'debit card', 'card', 'visa', 'mastercard', 'amex', 'diners', 'credit', 'debit'],
+    CASH: ['paid by cash', 'with cash', 'cash', 'money', 'physical cash', 'notes', 'coins', 'paid cash', 'in cash'],
+    BANK_TRANSFER: ['by bank transfer', 'bank transfer', 'transfer', 'upi', 'neft', 'imps', 'rtgs', 'swift', 'net banking', 'bank payment'],
+    MOBILE_PAYMENT: ['by google pay', 'by phonepe', 'by paytm', 'google pay', 'phonepe', 'paytm', 'mobikwik', 'mobile payment', 'tez', 'bhim', 'online payment', 'gpay'],
+    AUTO_DEBIT: ['by auto debit', 'auto debit', 'standing order', 'direct debit', 'recurring payment', 'automatic payment'],
+    OTHER: ['other payment', 'other method']
+  };
+
+  // Check for payment methods (prioritize longer phrases first)
+  // Sort entries by the length of the longest keyword in each category
+  const sortedMethods = Object.entries(paymentKeywords).sort((a, b) => {
+    const maxLenA = Math.max(...a[1].map(k => k.length));
+    const maxLenB = Math.max(...b[1].map(k => k.length));
+    return maxLenB - maxLenA;
+  });
+
+  for (const [method, keywords] of sortedMethods) {
+    const foundKeyword = keywords.find(keyword => lowerText.includes(keyword));
+    if (foundKeyword) {
+      result.paymentMethod = method;
+      break;
+    }
+  }
+
+  // Extract date information
+  const today = new Date();
+  const datePatterns = [
+    { pattern: /today|now/i, offset: 0 },
+    { pattern: /yesterday/i, offset: -1 },
+    { pattern: /tomorrow/i, offset: 1 },
+  ];
+
+  for (const { pattern, offset } of datePatterns) {
+    if (pattern.test(text)) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + offset);
+      result.date = date;
+      break;
+    }
+  }
+
+  // Extract title from patterns like "spent X on Y" or "paid X for Y"
+  // Priority: Extract text after "on" or "for" when preceded by spending/expense keywords
+  // Look for patterns: "spent/paid/bought [amount] [currency] on [title]" or "spent/paid/bought [amount] [currency] for [title]"
+  const onIndex = lowerText.indexOf(' on ');
+  const forIndex = lowerText.indexOf(' for ');
+  
+  // Check if "on" appears after spending keywords and amount
+  if (onIndex > -1) {
+    const beforeOn = lowerText.substring(0, onIndex);
+    const afterOn = text.substring(onIndex + 4).trim(); // +4 for " on "
+    
+    // Check if before "on" contains spending keywords and amount
+    const hasSpendingKeyword = /\b(spent|paid|bought|spend|pay|buy)\b/i.test(beforeOn);
+    const hasAmount = /\d+/.test(beforeOn) || /(?:₹|rs|rupees?|dollars?|inr|\$)/i.test(beforeOn);
+    
+    if (hasSpendingKeyword && hasAmount && afterOn.length > 0) {
+      let extractedTitle = afterOn;
+      // Remove trailing payment method, date, or other indicators
+      extractedTitle = extractedTitle
+        .replace(/\s+(?:today|yesterday|tomorrow|paid\s+by|by|via|at|from|₹|rs|rupees|dollars).*$/i, '')
+        .trim();
+      // Capitalize first letter of each word for better readability
+      extractedTitle = extractedTitle
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      if (extractedTitle.length > 0 && extractedTitle.length < 100) {
+        result.title = extractedTitle;
+      }
+    }
+  }
+  
+  // Check "for" pattern if "on" didn't match
+  if (!result.title && forIndex > -1) {
+    const beforeFor = lowerText.substring(0, forIndex);
+    const afterFor = text.substring(forIndex + 5).trim(); // +5 for " for "
+    
+    // Check if before "for" contains spending keywords and amount
+    const hasSpendingKeyword = /\b(spent|paid|bought|spend|pay|buy)\b/i.test(beforeFor);
+    const hasAmount = /\d+/.test(beforeFor) || /(?:₹|rs|rupees?|dollars?|inr|\$)/i.test(beforeFor);
+    
+    if (hasSpendingKeyword && hasAmount && afterFor.length > 0) {
+      let extractedTitle = afterFor;
+      // Remove trailing payment method, date, or other indicators
+      extractedTitle = extractedTitle
+        .replace(/\s+(?:today|yesterday|tomorrow|paid\s+by|by|via|at|from|₹|rs|rupees|dollars).*$/i, '')
+        .trim();
+      // Capitalize first letter of each word for better readability
+      extractedTitle = extractedTitle
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      if (extractedTitle.length > 0 && extractedTitle.length < 100) {
+        result.title = extractedTitle;
+      }
+    }
+  }
+
+  // Extract merchant/title (words before keywords) - fallback for other patterns
+  if (!result.title) {
+    const titleIndicators = ['at', 'from', 'in', 'to', 'bought', 'spent', 'paid', 'store', 'shop', 'merchant'];
+    for (const indicator of titleIndicators) {
+      const index = lowerText.indexOf(indicator);
+      if (index > 0) {
+        const potentialTitle = text.substring(0, index).trim();
+        // Clean up common prefixes
+        const cleanedTitle = potentialTitle
+          .replace(/^(spent|bought|paid|expense|income|earn|received)\s+/i, '')
+          .trim();
+        if (cleanedTitle.length > 0 && cleanedTitle.length < 50) {
+          result.title = cleanedTitle;
+          break;
+        }
+      }
+    }
+  }
+
+  // If no title extracted, try to get meaningful text before amount or category
+  if (!result.title) {
+    const amountIndex = amountMatch ? text.toLowerCase().indexOf(amountMatch[0].toLowerCase()) : -1;
+    if (amountIndex > 0) {
+      const potentialTitle = text.substring(0, amountIndex).trim();
+      // Clean up common prefixes
+      const cleanedTitle = potentialTitle
+        .replace(/^(spent|bought|paid|expense|income|earn|received|₹|rs|rupees|dollars)\s*/i, '')
+        .trim();
+      if (cleanedTitle.length > 0 && cleanedTitle.length < 50) {
+        result.title = cleanedTitle;
+      }
+    }
+  }
+
+  // Use remaining text as description if available
+  const descriptionKeyPhrases = ['for', 'note', 'memo', 'about'];
+  for (const phrase of descriptionKeyPhrases) {
+    const index = lowerText.indexOf(phrase);
+    if (index > -1) {
+      result.description = text.substring(index + phrase.length).trim();
+      break;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Maps parsed category to the exact value expected by the form
+ */
+export function mapCategoryToFormValue(category: string): string {
+  const categoryMap: Record<string, string> = {};
+  CATEGORIES.forEach(cat => {
+    categoryMap[cat.value.toLowerCase()] = cat.value;
+  });
+  return categoryMap[category.toLowerCase()] || category;
+}
+
+/**
+ * Maps parsed payment method to the exact value expected by the form
+ */
+export function mapPaymentMethodToFormValue(method: string): string {
+  // Early return if method is undefined
+  if (!method) return PAYMENT_METHODS_ENUM.CASH;
+  
+  // Direct mapping if it matches the enum exactly
+  const validMethods = Object.values(PAYMENT_METHODS_ENUM);
+  if (validMethods.includes(method as keyof typeof PAYMENT_METHODS_ENUM)) {
+    return method;
+  }
+
+  // Create mapping object from PAYMENT_METHODS
+  const methodMap: Record<string, string> = {};
+  PAYMENT_METHODS.forEach(m => {
+    methodMap[m.value.toLowerCase()] = m.value;
+  });
+
+  const mapped = methodMap[method.toLowerCase()] || PAYMENT_METHODS_ENUM.CASH;
+  return mapped;
+}
+

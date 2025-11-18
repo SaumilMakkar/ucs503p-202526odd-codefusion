@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { useEffect, useState } from "react";
-import { Calendar, Loader } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Calendar, Loader, Mic, Square } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,8 @@ import { useCreateTransactionMutation, useGetSingleTransactionQuery, useUpdateTr
 import { toast } from "sonner";
 import { useDispatch } from 'react-redux';
 import { transactionApi } from '@/features/transaction/transactionAPI';
+import { useVoiceInput } from "@/hooks/use-voice-input";
+import { useParseVoiceInputMutation } from "@/features/transaction/transactionAPI";
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -97,6 +99,11 @@ const TransactionForm = (props: {
   const [updateTransaction, { isLoading: isUpdating }] =
     useUpdateTransactionMutation();
 
+  // Voice input integration
+  const { isListening, transcript, startListening, stopListening, error: voiceError } = useVoiceInput();
+  const [parseVoiceInput, { isLoading: isParsingVoice }] = useParseVoiceInputMutation();
+  const processedTranscriptRef = useRef<string>(''); // Track processed transcripts to avoid duplicates
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -106,7 +113,7 @@ const TransactionForm = (props: {
       type: _TRANSACTION_TYPE.INCOME,
       category: "",
       date: new Date(),
-      paymentMethod: "",
+      paymentMethod: "" ,// Set default payment method
       isRecurring: false,
       frequency: null,
       description: "",
@@ -133,6 +140,86 @@ const TransactionForm = (props: {
       })
     }
   }, [editData, form, isEdit, transactionId]);
+
+  // Parse voice input when transcript is available using OpenRouter API
+  useEffect(() => {
+    // Only process if: not listening, has transcript, not already processed, and not currently parsing
+    if (
+      !isListening && 
+      transcript && 
+      transcript.trim().length > 0 && 
+      !isParsingVoice &&
+      processedTranscriptRef.current !== transcript.trim() // Avoid processing same transcript twice
+    ) {
+      // Mark this transcript as being processed
+      processedTranscriptRef.current = transcript.trim();
+      
+      // Call backend API to parse voice transcript using OpenRouter
+      parseVoiceInput({ transcript: transcript.trim() })
+        .unwrap()
+        .then((response) => {
+          const parsed = response.data;
+          
+          // Always prioritize title - it's important for transaction identification
+          if (parsed.title) {
+            form.setValue('title', parsed.title, { shouldValidate: true });
+          }
+          
+          // Fill other form fields if available
+          if (parsed.amount) {
+            form.setValue('amount', parsed.amount.toString(), { shouldValidate: true });
+          }
+          if (parsed.type) {
+            form.setValue('type', parsed.type as any, { shouldValidate: true });
+          }
+          if (parsed.category) {
+            // Category is already in lowercase from backend
+            form.setValue('category', parsed.category, { shouldValidate: true });
+          }
+          if (parsed.paymentMethod) {
+            // Ensure payment method value matches one of the available options
+            const validPaymentMethod = PAYMENT_METHODS.find(
+              (method) => method.value === parsed.paymentMethod
+            )?.value;
+            if (validPaymentMethod) {
+              form.setValue('paymentMethod', validPaymentMethod, { shouldValidate: true });
+            } else {
+              console.warn('Invalid payment method from API:', parsed.paymentMethod);
+            }
+          }
+          if (parsed.date) {
+            // Convert ISO date string to Date object
+            const dateObj = new Date(parsed.date);
+            if (!isNaN(dateObj.getTime())) {
+              form.setValue('date', dateObj, { shouldValidate: true });
+            }
+          }
+          if (parsed.description) {
+            form.setValue('description', parsed.description, { shouldValidate: true });
+          }
+          
+          // Only show success if we got at least one field (title, amount, category, or type)
+          if (parsed.title || parsed.amount || parsed.category || parsed.type) {
+            toast.success('Transaction details captured! Review and save.');
+          } else {
+            toast.info('Could not extract transaction details. Please try again with more details.');
+          }
+        })
+        .catch((error) => {
+          console.error('Error parsing voice input:', error);
+          // Reset processed transcript on error so user can retry
+          processedTranscriptRef.current = '';
+          toast.error(error?.data?.message || 'Failed to parse voice input. Please try again.');
+        });
+    }
+  }, [isListening, transcript, form, parseVoiceInput, isParsingVoice]);
+  
+  // Reset processed transcript when user starts listening again
+  useEffect(() => {
+    if (isListening) {
+      processedTranscriptRef.current = '';
+    }
+  }, [isListening]);
 
   const frequencyOptions = Object.entries(_TRANSACTION_FREQUENCY).map(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -218,6 +305,66 @@ const TransactionForm = (props: {
                 onScanComplete={handleScanComplete}
                 onLoadingChange={setIsScanning}
               />
+            )}
+
+            {/* Voice Input Section */}
+            {!isEdit && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (isListening) {
+                        stopListening();
+                      } else {
+                        startListening();
+                      }
+                    }}
+                    variant="outline"
+                    disabled={(isScanning || isParsingVoice) && !isListening}
+                    className="flex-1"
+                  >
+                    {isListening ? (
+                      <>
+                        <Square className="mr-2 h-4 w-4 fill-red-500 text-red-500" />
+                        Stop Recording
+                      </>
+                    ) : isParsingVoice ? (
+                      <>
+                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        Parsing...
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="mr-2 h-4 w-4" />
+                        Voice Input
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {isListening && (
+                  <div className="text-xs text-muted-foreground">
+                    🎤 Listening... Speak your transaction details
+                  </div>
+                )}
+                {transcript && !isListening && (
+                  <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
+                    📝 "{transcript}"
+                  </div>
+                )}
+                {voiceError && (
+                  <div className="text-xs text-destructive">
+                    ⚠️ {voiceError}
+                  </div>
+                )}
+                {!isListening && (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Example: "Spent 500 rupees on groceries at Walmart today, paid by card"
+                  </p>
+                )}
+              </div>
             )}
 
             {/* Transaction Type */}
@@ -394,7 +541,7 @@ const TransactionForm = (props: {
                   <FormLabel>Payment Method</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value || undefined}
                     disabled={isScanning}
                   >
                     <FormControl className="w-full">

@@ -193,7 +193,10 @@ export const generateReportService = async (
   const availableBalance = totalIncome - totalExpenses;
   const savingsRate = calculateSavingRate(totalIncome, totalExpenses);
 
-  const periodLabel = `${format(fromDate, "MMMM d")} - ${format(toDate, "d, yyyy")}`;
+  const periodLabel = `${format(fromDate, "MMM d, yyyy")} - ${format(
+    toDate,
+    "MMM d, yyyy"
+  )}`;
 
   const insights = await generateInsightsAI({
     totalIncome,

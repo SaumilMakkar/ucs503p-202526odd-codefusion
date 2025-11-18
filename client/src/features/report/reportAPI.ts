@@ -1,5 +1,5 @@
 import { apiClient } from "@/app/api-client";
-import { GetAllReportResponse, UpdateReportSettingParams } from "./reportType";
+import { GetAllReportResponse, UpdateReportSettingParams, SendWhatsAppReportPayload } from "./reportType";
 
 export const reportApi = apiClient.injectEndpoints({
   endpoints: (builder) => ({
@@ -13,6 +13,16 @@ export const reportApi = apiClient.injectEndpoints({
           params: { pageNumber, pageSize },
         });
       },
+      providesTags: (result) =>
+        result?.reports
+          ? [
+              ...result.reports.map((report) => ({
+                type: "reports" as const,
+                id: report._id,
+              })),
+              { type: "reports" as const, id: "LIST" },
+            ]
+          : [{ type: "reports" as const, id: "LIST" }],
     }),
 
     updateReportSetting: builder.mutation<void, UpdateReportSettingParams>({
@@ -31,6 +41,25 @@ export const reportApi = apiClient.injectEndpoints({
         url: "/reports/trigger-generation",
         method: "POST",
       }),
+      invalidatesTags: [{ type: "reports", id: "LIST" }],
+    }),
+
+    sendTestWhatsApp: builder.mutation<void, { from: string; to: string; phoneNumber?: string }>({
+      query: ({ from, to, phoneNumber }) => ({
+        url: "/reports/send-test-whatsapp",
+        method: "GET",
+        params: { from, to, phoneNumber },
+      }),
+      invalidatesTags: [{ type: "reports", id: "LIST" }],
+    }),
+
+    sendWhatsAppReport: builder.mutation<void, SendWhatsAppReportPayload>({
+      query: ({ from, to, phoneNumber }) => ({
+        url: "/reports/send-whatsapp-report",
+        method: "POST",
+        body: { from, to, phoneNumber },
+      }),
+      invalidatesTags: [{ type: "reports", id: "LIST" }],
     }),
   }),
 });
@@ -38,5 +67,7 @@ export const reportApi = apiClient.injectEndpoints({
 export const {
     useGetAllReportsQuery,
     useUpdateReportSettingMutation,
-    useTriggerReportGenerationMutation
+    useTriggerReportGenerationMutation,
+    useSendTestWhatsAppMutation,
+    useSendWhatsAppReportMutation
 } = reportApi;

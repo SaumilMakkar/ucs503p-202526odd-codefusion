@@ -1,17 +1,20 @@
 import { AUTH_ROUTES, PROTECTED_ROUTES } from "./routePath";
 import SignIn from "@/pages/auth/sign-in";
 import SignUp from "@/pages/auth/sign-up";
+import GoogleCallback from "@/pages/auth/google-callback";
 import Dashboard from "@/pages/dashboard";
 import Transactions from "@/pages/transactions";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Account from "@/pages/settings/account";
 import Appearance from "@/pages/settings/appearance";
+import About from "@/pages/settings/about";
 import Billing from "@/pages/settings/billing";
 
 export const authenticationRoutePaths = [
   { path: AUTH_ROUTES.SIGN_IN, element: <SignIn /> },
   { path: AUTH_ROUTES.SIGN_UP, element: <SignUp /> },
+  { path: AUTH_ROUTES.GOOGLE_CALLBACK, element: <GoogleCallback /> },
 ];
 
 export const protectedRoutePaths = [
@@ -24,6 +27,7 @@ export const protectedRoutePaths = [
       { index: true, element: <Account /> }, // Default route
       { path: PROTECTED_ROUTES.SETTINGS, element: <Account /> },
       { path: PROTECTED_ROUTES.SETTINGS_APPEARANCE, element: <Appearance /> },
+      { path: PROTECTED_ROUTES.SETTINGS_ABOUT, element: <About /> },
       { path: PROTECTED_ROUTES.SETTINGS_BILLING, element: <Billing /> },
     ]
   },
