@@ -8,6 +8,7 @@ import {
   duplicateTransactionController,
   getAllTransactionController,
   getTransactionByIdController,
+  parseVoiceInputController,
   scanReceiptController,
   updateTransactionController,
  
@@ -27,4 +28,5 @@ transactionRoutes.delete("/delete/:id",deleteTransactionController );
 transactionRoutes.post("/bulk-delete",bulkDeleteTransactionController );
 transactionRoutes.post("/bulk-transaction", bulkTransactionController);
 transactionRoutes.post("/scan-receipt",upload.single("receipt"), scanReceiptController);
+transactionRoutes.post("/parse-voice", parseVoiceInputController);
 export default transactionRoutes;

@@ -7,6 +7,7 @@ import {
   createTransactionSchema,
   transactionIdSchema,
   updateTransactionSchema,
+  voiceInputSchema,
 } from "../validators/transaction.validator";
 import {
   
@@ -21,7 +22,7 @@ import {
   updateTransactionService,
  
 } from "../services/transaction.service";
-import { TransactionTypeEnum } from "../models/transaction.model";
+import { parseVoiceTranscriptService } from "../services/voice-parser.service";
 
 export const createTransactionController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -173,6 +174,24 @@ export const scanReceiptController = asyncHandler(
     return res.status(HTTPSTATUS.OK).json({
       message: "Reciept scanned successfully",
       data: result,
+    });
+  }
+);
+
+/**
+ * Controller for parsing voice transcript into transaction details
+ * Uses OpenRouter API with Gemini model for intelligent parsing
+ */
+export const parseVoiceInputController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { transcript } = voiceInputSchema.parse(req.body);
+
+    // Parse the voice transcript using OpenRouter API
+    const parsedTransaction = await parseVoiceTranscriptService(transcript);
+
+    return res.status(HTTPSTATUS.OK).json({
+      message: "Voice input parsed successfully",
+      data: parsedTransaction,
     });
   }
 );

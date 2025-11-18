@@ -1,5 +1,5 @@
 import { apiClient } from "@/app/api-client";
-import { AIScanReceiptResponse, BulkImportTransactionPayload, CreateTransactionBody, GetAllTransactionParams, GetAllTransactionResponse, GetSingleTransactionResponse, UpdateTransactionPayload } from "./transactionType";
+import { AIScanReceiptResponse, BulkImportTransactionPayload, CreateTransactionBody, GetAllTransactionParams, GetAllTransactionResponse, GetSingleTransactionResponse, ParsedVoiceTransaction, UpdateTransactionPayload } from "./transactionType";
 
 export const transactionApi = apiClient.injectEndpoints({
   endpoints: (builder) => ({
@@ -93,6 +93,14 @@ export const transactionApi = apiClient.injectEndpoints({
       }),
       invalidatesTags: ["transactions","analytics"],
     }),
+
+    parseVoiceInput: builder.mutation<{ data: ParsedVoiceTransaction }, { transcript: string }>({
+      query: (body) => ({
+        url: "/transaction/parse-voice",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -106,4 +114,5 @@ export const {
   useBulkImportTransactionMutation,
   useDeleteTransactionMutation,
   useBulkDeleteTransactionMutation,
+  useParseVoiceInputMutation,
 } = transactionApi;

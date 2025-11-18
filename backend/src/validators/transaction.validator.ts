@@ -79,3 +79,12 @@ export type UpdateTransactionType = z.infer<typeof updateTransactionSchema>;
 export type BulkDelteTransactionType = z.infer<
   typeof bulkDeleteTransactionSchema
 >;
+
+/**
+ * Schema for voice input parsing request
+ */
+export const voiceInputSchema = z.object({
+  transcript: z.string().min(1, "Transcript is required").max(5000, "Transcript is too long"),
+});
+
+export type VoiceInputType = z.infer<typeof voiceInputSchema>;

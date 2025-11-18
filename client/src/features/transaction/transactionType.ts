@@ -102,3 +102,17 @@ export interface BulkTransactionType {
 export interface BulkImportTransactionPayload {
   transactions: BulkTransactionType[];
 }
+
+/**
+ * Parsed transaction data from voice input
+ * Returned by the voice parsing API endpoint
+ */
+export interface ParsedVoiceTransaction {
+  title?: string;
+  amount?: number;
+  type?: "INCOME" | "EXPENSE";
+  category?: string;
+  paymentMethod?: string;
+  date?: string; // ISO date string (YYYY-MM-DD)
+  description?: string;
+}
