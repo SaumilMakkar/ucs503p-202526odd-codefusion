@@ -12,6 +12,7 @@ import { errorHandler } from "./middlewares/errorHandler.middleware";
 const app = express();
 import { BadRequestException } from "./utils/app-error";
 import {connectDatabase} from "./config/database.config";
+import mongoose from "mongoose";
 import authRoutes from "./routes/auth.route";
 import { passportAuthenticateJwt } from "./config/passport.config";
 import userRoutes from "./routes/user.routes";
@@ -21,6 +22,7 @@ import reportRoutes from "./routes/report.route";
 import { getDateRange } from "./utils/date";
 import analyticsRoutes from "./routes/analytics.routes";
 import billingRoutes from "./routes/billing.route";
+import chatbotRoutes from "./routes/chatbot.route";
 const BASE_PATH=Env.BASE_PATH
 app.use(express.urlencoded({ extended: true }));
 // Allow multiple origins (local dev + production)
@@ -86,22 +88,27 @@ app.use(`${BASE_PATH}/transaction`, passportAuthenticateJwt,transactionRoutes )
 app.use(`${BASE_PATH}/reports`, passportAuthenticateJwt, reportRoutes);
 app.use(`${BASE_PATH}/analytics`, passportAuthenticateJwt,analyticsRoutes );
 app.use(`${BASE_PATH}/billing`, passportAuthenticateJwt,billingRoutes );
+app.use(`${BASE_PATH}/chatbot`, chatbotRoutes);
 app.use(errorHandler);
 
 (async () => {
   try {
+    // Connect to MongoDB first - this will throw if connection fails
     await connectDatabase();
+    
     if(Env.NODE_ENV==='development'){
-    await initializeCrons()
+      await initializeCrons()
     }
+    
+    // Only start server after successful MongoDB connection
     app.listen(Env.PORT, () => {
-      
-      console.log(`Auth routes available at: http://localhost:${Env.PORT}${BASE_PATH}/auth`);
-      console.log(`Server running on port ${Env.PORT} in ${Env.NODE_ENV} mode`);
-
+      console.log(`✅ Auth routes available at: http://localhost:${Env.PORT}${BASE_PATH}/auth`);
+      console.log(`✅ Server running on port ${Env.PORT} in ${Env.NODE_ENV} mode`);
+      console.log(`✅ MongoDB connection: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Not Connected'}`);
     })
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error("❌ Failed to start server:", error);
+    console.error("❌ Please check your MongoDB connection string in .env file");
     process.exit(1);
   }
 })();
