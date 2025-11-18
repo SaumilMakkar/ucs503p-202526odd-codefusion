@@ -252,7 +252,7 @@ Based on a survey of 48 respondents:
 
 ### Frontend
 - **Platform:** Vercel
-- **Live URL:** https://ucs503p-202526odd-codefusion.vercel-zdge.app
+- **Live URL:** (https://ucs503p-202526odd-codefusion-zdge.vercel.app/)
 
 ### Backend
 - **Platform:** Render/Cloud
