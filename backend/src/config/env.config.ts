@@ -16,7 +16,8 @@ const envConfig = () => ({
 
   GEMINI_API_KEY: getEnv("GEMINI_API_KEY"),
 
-
+  // OpenRouter API Configuration
+  OPENROUTER_API_KEY: getEnv("OPENROUTER_API_KEY"),
 
 CLOUDINARY_CLOUD_NAME:getEnv("CLOUDINARY_CLOUD_NAME"),
 CLOUDINARY_API_KEY:getEnv("CLOUDINARY_API_KEY"),

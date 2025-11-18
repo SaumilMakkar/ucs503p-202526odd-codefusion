@@ -14,6 +14,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const manuallyStoppedRef = useRef<boolean>(false); // Track if user manually stopped
 
   useEffect(() => {
     // Check if browser supports Web Speech API
@@ -30,6 +31,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
+      manuallyStoppedRef.current = false; // Reset manual stop flag
       setIsListening(true);
       setTranscript('');
       setError(null);
@@ -75,7 +77,11 @@ export function useVoiceInput(): UseVoiceInputReturn {
     };
 
     recognition.onend = () => {
-      setIsListening(false);
+      // Only update state if it wasn't manually stopped (to avoid race conditions)
+      if (!manuallyStoppedRef.current) {
+        setIsListening(false);
+      }
+      manuallyStoppedRef.current = false; // Reset flag
     };
 
     recognitionRef.current = recognition;
@@ -102,9 +108,18 @@ export function useVoiceInput(): UseVoiceInputReturn {
   };
 
   const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      toast.success('Stopped listening');
+    if (recognitionRef.current && isListening) {
+      // Mark as manually stopped to prevent onend from overriding
+      manuallyStoppedRef.current = true;
+      // Immediately update state for instant UI response
+      setIsListening(false);
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        // Ignore errors if already stopped
+        console.log('Recognition already stopped');
+      }
+      // Don't show toast - user knows they stopped it
     }
   };
 
